@@ -1,0 +1,179 @@
+<h2><%= l(:label_activity_history) %> (<%= format_date(@date) %>)</h2>
+
+<div class="contextual">
+  <%= link_to l(:label_user_activity_report), user_activity_report_index_path, class: 'icon icon-users' %>
+</div>
+
+<%= form_tag(user_activity_histories_path, method: :get) do %>
+  <p>
+    <%= label_tag :date, l(:field_date) %>
+    <%= text_field_tag :date, @date, size: 10, class: 'date' %>
+    <%= submit_tag l(:button_apply), class: 'button-small' %>
+  </p>
+<% end %>
+
+<% if @histories.any? %>
+  <div class="autoscroll">
+    <table class="list">
+      <thead>
+        <tr>
+          <th><%= l(:label_user) %></th>
+          <th><%= l(:field_last_login_on) %></th>
+          <th><%= l(:label_issue_open_plural) %></th>
+          <th><%= l(:label_issue_closed_plural) %></th>
+          <th><%= l(:label_total_issues) %></th>
+          <th><%= l(:label_projects_count) %></th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @histories.each do |history| %>
+          <tr>
+            <td><%= link_to history.user.name, user_path(history.user) %></td>
+            <td><%= format_date(history.last_login_on) %></td>
+            <td class="open-issues"><%= history.open_issues_count %></td>
+            <td class="closed-issues"><%= history.closed_issues_count %></td>
+            <td><%= history.total_issues_count %></td>
+            <td><%= history.projects_summary.keys.count %></td>
+            <td>
+              <%= link_to l(:button_view), user_activity_history_path(history.user), class: 'icon icon-magnifier' %>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+<% else %>
+  <p class="nodata"><%= l(:label_no_data) %></p>
+<% end %>
+
+# app/views/user_activity_histories/show.html.erb
+<%= javascript_include_tag 'https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.4/Chart.min.js' %>
+<style>
+  .chart-container {
+    position: relative;
+    height: 300px;
+    width: 100%;
+    margin-bottom: 20px;
+  }
+</style>
+
+<h2><%= l(:label_activity_history) %>: <%= @user.name %></h2>
+
+<div class="contextual">
+  <%= link_to l(:label_activity_history), user_activity_histories_path, class: 'icon icon-history' %>
+  <%= link_to l(:label_user_activity_report), user_activity_report_path(@user), class: 'icon icon-users' %>
+</div>
+
+<%= form_tag(user_activity_history_path(@user), method: :get) do %>
+  <p>
+    <%= label_tag :start_date, l(:field_start_date) %>
+    <%= text_field_tag :start_date, @start_date, size: 10, class: 'date' %>
+
+    <%= label_tag :end_date, l(:field_end_date) %>
+    <%= text_field_tag :end_date, @end_date, size: 10, class: 'date' %>
+
+    <%= submit_tag l(:button_apply), class: 'button-small' %>
+  </p>
+<% end %>
+
+<% if @histories.any? %>
+  <h3><%= l(:label_issue_trend) %></h3>
+  <div class="box">
+    <div class="chart-container">
+      <canvas id="issuesTrendChart"></canvas>
+    </div>
+  </div>
+
+  <h3><%= l(:label_activity_records) %></h3>
+  <div class="autoscroll">
+    <table class="list">
+      <thead>
+        <tr>
+          <th><%= l(:field_date) %></th>
+          <th><%= l(:label_issue_open_plural) %></th>
+          <th><%= l(:label_issue_closed_plural) %></th>
+          <th><%= l(:label_total_issues) %></th>
+          <th><%= l(:label_projects_count) %></th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @histories.each do |history| %>
+          <tr>
+            <td><%= format_date(history.activity_date) %></td>
+            <td class="open-issues"><%= history.open_issues_count %></td>
+            <td class="closed-issues"><%= history.closed_issues_count %></td>
+            <td><%= history.total_issues_count %></td>
+            <td><%= history.projects_summary.keys.count %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+
+  <script>
+  document.addEventListener('DOMContentLoaded', function() {
+    var ctx = document.getElementById('issuesTrendChart').getContext('2d');
+    var chart = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: <%= raw @chart_data[:labels].to_json %>,
+        datasets: [
+          {
+            label: '<%= l(:label_issue_open_plural) %>',
+            borderColor: '#2a67a5',
+            backgroundColor: 'rgba(42, 103, 165, 0.1)',
+            data: <%= raw @chart_data[:open].to_json %>,
+            fill: true
+          },
+          {
+            label: '<%= l(:label_issue_closed_plural) %>',
+            borderColor: '#4eb97e',
+            backgroundColor: 'rgba(78, 185, 126, 0.1)',
+            data: <%= raw @chart_data[:closed].to_json %>,
+            fill: true
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          xAxes: [{
+            type: 'time',
+            time: {
+              parser: 'YYYY-MM-DD',
+              tooltipFormat: 'll',
+              unit: 'day',
+              unitStepSize: 1,
+              displayFormats: {
+                'day': 'MMM D'
+              }
+            },
+            scaleLabel: {
+              display: true,
+              labelString: '<%= l(:field_date) %>'
+            }
+          }],
+          yAxes: [{
+            ticks: {
+              beginAtZero: true,
+              precision: 0
+            },
+            scaleLabel: {
+              display: true,
+              labelString: '<%= l(:label_issue_count) %>'
+            }
+          }]
+        },
+        tooltips: {
+          mode: 'index',
+          intersect: false
+        }
+      }
+    });
+  });
+  </script>
+<% else %>
+  <p class="nodata"><%= l(:label_no_data) %></p>
+<% end %>

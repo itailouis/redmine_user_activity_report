@@ -1,0 +1,90 @@
+<% html_title l(:label_user_activity_report), @user.name %>
+
+<div class="contextual">
+  <%= link_to l(:label_user_activity_report), user_activity_report_index_path, class: 'icon icon-users' %>
+</div>
+
+<h2><%= l(:label_user_activity_report) %>: <%= @user.name %></h2>
+
+<div class="splitcontent">
+  <div class="splitcontentleft">
+      <div class="box">
+        <h3><%= l(:field_user_details) %></h3>
+        <ul>
+          <li><%= l(:field_login) %>: <strong><%= @user.login %></strong></li>
+          <li><%= l(:field_last_login_on) %>:
+            <strong>
+              <% if @user.last_login_on %>
+                <%= format_date(@user.last_login_on) %>
+                <span class="time-ago">(<%= distance_of_time_in_words(@user.last_login_on, Time.now) %> ago)</span>
+              <% else %>
+                Never
+              <% end %>
+            </strong>
+          </li>
+          <li><%= l(:field_created_on) %>: <strong><%= format_date(@user.created_on) %></strong></li>
+          <li><%= l(:label_issue_open_plural) %>: <strong><span class="open-issues"><%= Issue.visible.where(:assigned_to_id => @user.id).open.count %></span></strong></li>
+          <li><%= l(:label_issue_closed_plural) %>: <strong><span class="closed-issues"><%= Issue.visible.where(:assigned_to_id => @user.id).where(:status_id => IssueStatus.where(:is_closed => true).pluck(:id)).count %></span></strong></li>
+          <li><%= l(:label_total_issues) %>: <strong><%= Issue.visible.where(:assigned_to_id => @user.id).count %></strong></li>
+        </ul>
+      </div>
+  </div>
+
+   <div class="splitcontentright">
+       <div class="box">
+            <h3><%= l(:label_project_issues) %></h3>
+            <% if @issues_by_project.any? %>
+              <table class="list">
+                <thead>
+                  <tr>
+                    <th><%= l(:label_project) %></th>
+                    <th><%= l(:label_issue_open_plural) %></th>
+                    <th><%= l(:label_issue_closed_plural) %></th>
+                    <th><%= l(:label_issue_plural) %></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <% @issues_by_project.each do |project_id, data| %>
+                    <tr>
+                      <td>
+                        <%= link_to data[:name], project_issues_path(
+                          Project.find(project_id),
+                          :set_filter => 1,
+                          :assigned_to_id => @user.id
+                        ) %>
+                      </td>
+                      <td class="count">
+                        <% if data[:open_count] > 0 %>
+                          <%= link_to content_tag(:span, data[:open_count], :class => 'open-issues'), project_issues_path(
+                            Project.find(project_id),
+                            :set_filter => 1,
+                            :assigned_to_id => @user.id,
+                            :status_id => 'o'
+                          ) %>
+                        <% else %>
+                          <span class="open-issues">0</span>
+                        <% end %>
+                      </td>
+                      <td class="count">
+                        <% if data[:closed_count] > 0 %>
+                          <%= link_to content_tag(:span, data[:closed_count], :class => 'closed-issues'), project_issues_path(
+                            Project.find(project_id),
+                            :set_filter => 1,
+                            :assigned_to_id => @user.id,
+                            :status_id => 'c'
+                          ) %>
+                        <% else %>
+                          <span class="closed-issues">0</span>
+                        <% end %>
+                      </td>
+                      <td class="count"><%= data[:count] %></td>
+                    </tr>
+                  <% end %>
+                </tbody>
+              </table>
+            <% else %>
+              <p class="nodata"><%= l(:label_no_data) %></p>
+            <% end %>
+          </div>
+        </div>
+  </div>

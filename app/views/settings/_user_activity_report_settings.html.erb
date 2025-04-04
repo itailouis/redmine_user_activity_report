@@ -1,0 +1,36 @@
+<h3><%= l(:label_settings) %></h3>
+
+<div class="box tabular settings">
+  <p>
+    <%= content_tag(:label, l(:setting_restrict_access)) %>
+    <%= check_box_tag 'settings[restrict_access]', '1', @settings['restrict_access'] == '1' %>
+    <em class="info"><%= l(:text_setting_restrict_access_info) %></em>
+  </p>
+
+  <p>
+    <%= content_tag(:label, l(:setting_allow_project_managers)) %>
+    <%= check_box_tag 'settings[allow_project_managers]', '1', @settings['allow_project_managers'] == '1' %>
+    <em class="info"><%= l(:text_setting_allow_project_managers_info) %></em>
+  </p>
+
+  <p>
+    <%= content_tag(:label, l(:setting_allow_history_access)) %>
+    <%= check_box_tag 'settings[allow_history_access]', '1', @settings['allow_history_access'] == '1' %>
+    <em class="info"><%= l(:text_setting_allow_history_access_info) %></em>
+  </p>
+
+  <p>
+    <%= content_tag(:label, l(:setting_history_retention_months)) %>
+    <%= select_tag 'settings[history_retention_months]',
+          options_for_select([
+            [l(:label_months, 3), '3'],
+            [l(:label_months, 6), '6'],
+            [l(:label_months, 12), '12'],
+            [l(:label_years, 1), '12'],
+            [l(:label_years, 2), '24'],
+            [l(:label_unlimited), '0']
+          ], @settings['history_retention_months']) %>
+    <em class="info"><%= l(:text_setting_history_retention_info) %></em>
+  </p>
+</div>
+

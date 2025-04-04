@@ -1,0 +1,32 @@
+en:
+  label_user_activity_report: User Activity Report
+  field_user_details: User Details
+  label_project_issues: Issues by Project
+  label_total_issues: Total Issues
+  label_issue_open_plural: Open Issues
+  label_issue_closed_plural: Closed Issues
+  button_details: Details
+  button_view: View
+  label_issue_distribution: Issue Distribution by Project
+  label_priority_distribution: Open Issues by Priority
+  label_user_list: User List
+  label_user_workload_overview: User Workload Overview
+  project_module_user_activity_report: User Activity Report
+  permission_view_user_activity_report: View all user activity
+  permission_view_own_activity_only: View own activity only
+  permission_manage_activity_history: Manage activity history
+
+  # Settings
+  setting_restrict_access: Restrict access to project members
+  text_setting_restrict_access_info: When enabled, users with permission can only see activity for members of their projects
+  setting_allow_project_managers: Allow project managers access
+  text_setting_allow_project_managers_info: When enabled, project managers can view activity for members of their projects
+  setting_allow_history_access: Enable activity history
+  text_setting_allow_history_access_info: When enabled, the activity history feature will be accessible
+  setting_history_retention_months: History retention period
+  text_setting_history_retention_info: How long to keep activity history records
+
+  # Labels for retention periods
+  label_months: "%{count} months"
+  label_years: "%{count} years"
+  label_unlimited: Unlimited
