@@ -19,3 +19,13 @@ Access Control
 
 Only administrators can see the report (configurable)
 The plugin respects Redmine's permission system
+
+Installation and Usage
+I've also created a detailed installation guide that explains how to:
+
+Install the plugin in your Redmine instance
+Configure and use its features
+Troubleshoot common issues
+Uninstall if needed
+
+To install the plugin, follow the instructions in the installation guide. Once installed, administrators will see a "User Activity Report" link in the top menu of Redmine.
