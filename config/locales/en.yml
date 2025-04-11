@@ -7,10 +7,23 @@ en:
   label_issue_closed_plural: Closed Issues
   button_details: Details
   button_view: View
+
+
   label_issue_distribution: Issue Distribution by Project
   label_priority_distribution: Open Issues by Priority
   label_user_list: User List
   label_user_workload_overview: User Workload Overview
+  label_activity_history: Activity History
+  label_activity_records: Activity Records
+  label_issue_trend: Issue Trend
+  label_projects_count: Projects
+  label_issue_count: Issue Count
+  field_start_date: Start Date
+  field_end_date: End Date
+  field_date: Date
+
+
+  # Permissions
   project_module_user_activity_report: User Activity Report
   permission_view_user_activity_report: View all user activity
   permission_view_own_activity_only: View own activity only

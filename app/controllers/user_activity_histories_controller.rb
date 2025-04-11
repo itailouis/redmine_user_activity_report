@@ -16,7 +16,7 @@ class UserActivityHistoriesController < ApplicationController
     @histories = UserActivityHistory.for_date(@date).includes(:user)
 
     # Filter to only show project members if setting is enabled
-    if Setting.plugin_user_activity_report['restrict_access'] == '1' && !User.current.admin?
+    if Setting.plugin_redmine_user_activity_report['restrict_access'] == '1' && !User.current.admin?
       # Get all projects the current user can manage
       managed_project_ids = Project.where(Project.allowed_to_condition(User.current, :manage_members)).pluck(:id)
 
@@ -58,7 +58,7 @@ class UserActivityHistoriesController < ApplicationController
 
   def require_history_allowed
     # First check if history access is enabled in settings
-    unless Setting.plugin_user_activity_report['allow_history_access'] == '1'
+    unless Setting.plugin_redmine_user_activity_report['allow_history_access'] == '1'
       render_403
       return false
     end
@@ -67,7 +67,7 @@ class UserActivityHistoriesController < ApplicationController
     unless User.current.admin? ||
            User.current.allowed_to_globally?(:manage_activity_history) ||
            (User.current.allowed_to_globally?(:view_own_activity_only) && action_name == 'show' && params[:id].to_i == User.current.id) ||
-           (Setting.plugin_user_activity_report['allow_project_managers'] == '1' && is_manager_of_any_project?)
+           (Setting.plugin_redmine_user_activity_report['allow_project_managers'] == '1' && is_manager_of_any_project?)
       render_403
       return false
     end
@@ -91,7 +91,7 @@ class UserActivityHistoriesController < ApplicationController
     return true if User.current.allowed_to_globally?(:manage_activity_history)
 
     # Project managers can view their project members if enabled
-    if Setting.plugin_user_activity_report['allow_project_managers'] == '1'
+    if Setting.plugin_redmine_user_activity_report['allow_project_managers'] == '1'
       return is_manager_of_user?(user)
     end
 

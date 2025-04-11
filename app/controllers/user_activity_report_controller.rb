@@ -21,7 +21,7 @@ class UserActivityReportController < ApplicationController
     @users = User.active.sorted
 
     # Filter to only show project members if setting is enabled
-    if Setting.plugin_user_activity_report['restrict_access'] == '1' && !User.current.admin?
+    if Setting.plugin_redmine_user_activity_report['restrict_access'] == '1' && !User.current.admin?
       # Get all projects the current user can manage
       managed_project_ids = Project.where(Project.allowed_to_condition(User.current, :manage_members)).pluck(:id)
 
@@ -118,7 +118,7 @@ class UserActivityReportController < ApplicationController
     unless User.current.admin? ||
            User.current.allowed_to_globally?(:view_user_activity_report) ||
            User.current.allowed_to_globally?(:view_own_activity_only) ||
-           (Setting.plugin_user_activity_report['allow_project_managers'] == '1' && is_manager_of_any_project?)
+           (Setting.plugin_redmine_user_activity_report['allow_project_managers'] == '1' && is_manager_of_any_project?)
       render_403
       return false
     end
@@ -142,7 +142,7 @@ class UserActivityReportController < ApplicationController
     return true if User.current.allowed_to_globally?(:view_user_activity_report)
 
     # Project managers can view their project members if enabled
-    if Setting.plugin_user_activity_report['allow_project_managers'] == '1'
+    if Setting.plugin_redmine_user_activity_report['allow_project_managers'] == '1'
       return is_manager_of_user?(user)
     end
 

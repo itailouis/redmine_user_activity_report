@@ -14,7 +14,7 @@
      Redmine::Cron::CronJob.create(
        name: 'Record User Activity',
        schedule: '0 0 * * *', # Run at midnight every day
-       command: 'rake redmine:plugins:user_activity_report:record_daily_activity'
+       command: 'rake redmine:plugins:redmine_user_activity_report:record_daily_activity'
      )
    end
  end

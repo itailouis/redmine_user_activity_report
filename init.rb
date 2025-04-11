@@ -1,4 +1,4 @@
-Redmine::Plugin.register :user_activity_report do
+Redmine::Plugin.register :redmine_user_activity_report do
   name 'User Activity Report'
   author 'Itai Louis Zulu'
   description 'Shows a report on when users last logged in and how many issues they have in each project'
@@ -7,8 +7,8 @@ Redmine::Plugin.register :user_activity_report do
   author_url 'http://example.com/about'
 
   # Add detailed permissions for this plugin
-  project_module :user_activity_report do
-    permission :view_user_activity_report, { 
+  project_module :redmine_user_activity_report do
+    permission :view_user_activity_report, {
       :user_activity_report => [:index, :show],
       :user_activity_histories => [:index, :show]
     }
@@ -21,26 +21,26 @@ Redmine::Plugin.register :user_activity_report do
       :user_activity_histories => [:index, :show]
     }
   end
-  
+
   # Add settings
   settings :default => {
     'restrict_access' => '1',
     'allow_project_managers' => '0',
     'allow_history_access' => '1',
     'history_retention_months' => '12'
-  }, :partial => 'settings/user_activity_report_settings'
-  
+  }, :partial => 'settings/redmine_user_activity_report_settings'
+
   # Add menu items based on settings and permissions
-  menu :top_menu, :user_activity_report, 
+  menu :top_menu, :redmine_user_activity_report,
        { :controller => 'user_activity_report', :action => 'index' },
        :caption => 'User Activity Report',
        :if => Proc.new { |p| User.current.admin? || User.current.allowed_to_globally?(:view_user_activity_report) }
-  
-  menu :top_menu, :user_activity_history, 
+
+  menu :top_menu, :redmine_user_activity_report,
        { :controller => 'user_activity_histories', :action => 'index' },
        :caption => 'Activity History',
-       :if => Proc.new { |p| 
-         (User.current.admin? || User.current.allowed_to_globally?(:manage_activity_history)) && 
-         Setting.plugin_user_activity_report['allow_history_access'] == '1'
+       :if => Proc.new { |p|
+         (User.current.admin? || User.current.allowed_to_globally?(:manage_activity_history)) &&
+         Setting.plugin_redmine_user_activity_report['allow_history_access'] == '1'
        }
 end
