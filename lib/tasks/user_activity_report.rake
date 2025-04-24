@@ -2,6 +2,7 @@ namespace :redmine do
   namespace :plugins do
     namespace :user_activity_report do
       desc 'Generate user activity report'
+      #puts "Just do it"
       task :generate => :environment do
         puts "Generating User Activity Report..."
 
