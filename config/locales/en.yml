@@ -18,6 +18,7 @@ en:
     label_issue_count: Issue Count
     field_start_date: Start Date
     field_end_date: End Date
+    field_date : Dates
     label_project_contribution: Project Contribution
 
     # Permissions
