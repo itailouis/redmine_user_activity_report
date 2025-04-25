@@ -1,10 +1,15 @@
 <%= javascript_include_tag 'https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.4/Chart.min.js' %>
+<%= javascript_include_tag 'https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js' %>
 <style>
   .chart-container {
     position: relative;
     height: 300px;
     width: 100%;
     margin-bottom: 20px;
+  }
+
+  .radar-chart-container {
+    height: 400px;
   }
 </style>
 
@@ -34,6 +39,15 @@
       <canvas id="issuesTrendChart"></canvas>
     </div>
   </div>
+
+  <% if @project_radar_data[:labels].present? && @project_radar_data[:labels].any? %>
+    <h3><%= l(:label_project_contribution) %></h3>
+    <div class="box">
+      <div class="chart-container radar-chart-container">
+        <canvas id="projectContributionChart"></canvas>
+      </div>
+    </div>
+  <% end %>
 
   <h3><%= l(:label_activity_records) %></h3>
   <div class="autoscroll">
@@ -74,6 +88,10 @@
             borderColor: '#2a67a5',
             backgroundColor: 'rgba(42, 103, 165, 0.1)',
             data: <%= raw @chart_data[:open].to_json %>,
+            borderWidth: 2,
+            pointRadius: 3,
+            pointHoverRadius: 5,
+            pointBackgroundColor: '#2a67a5',
             fill: true
           },
           {
@@ -81,6 +99,10 @@
             borderColor: '#4eb97e',
             backgroundColor: 'rgba(78, 185, 126, 0.1)',
             data: <%= raw @chart_data[:closed].to_json %>,
+            borderWidth: 2,
+            pointRadius: 3,
+            pointHoverRadius: 5,
+            pointBackgroundColor: '#4eb97e',
             fill: true
           }
         ]
@@ -90,15 +112,9 @@
         maintainAspectRatio: false,
         scales: {
           xAxes: [{
-            type: 'time',
-            time: {
-              parser: 'YYYY-MM-DD',
-              tooltipFormat: 'll',
-              unit: 'day',
-              unitStepSize: 1,
-              displayFormats: {
-                'day': 'MMM D'
-              }
+            type: 'category',
+            gridLines: {
+              drawOnChartArea: false
             },
             scaleLabel: {
               display: true,
@@ -109,6 +125,10 @@
             ticks: {
               beginAtZero: true,
               precision: 0
+            },
+            gridLines: {
+              color: 'rgba(0, 0, 0, 0.05)',
+              zeroLineColor: 'rgba(0, 0, 0, 0.1)'
             },
             scaleLabel: {
               display: true,
@@ -124,6 +144,60 @@
     });
   });
   </script>
+
+  <% if @project_radar_data[:labels].present? && @project_radar_data[:labels].any? %>
+  <script>
+  document.addEventListener('DOMContentLoaded', function() {
+    var ctx = document.getElementById('projectContributionChart').getContext('2d');
+    var chart = new Chart(ctx, {
+      type: 'radar',
+      data: {
+        labels: <%= raw @project_radar_data[:labels].to_json %>,
+        datasets: [
+          {
+            label: '<%= l(:label_issue_open_plural) %>',
+            backgroundColor: 'rgba(42, 103, 165, 0.2)',
+            borderColor: 'rgba(42, 103, 165, 0.8)',
+            pointBackgroundColor: 'rgba(42, 103, 165, 1)',
+            data: <%= raw @project_radar_data[:open_counts].to_json %>
+          },
+          {
+            label: '<%= l(:label_issue_closed_plural) %>',
+            backgroundColor: 'rgba(78, 185, 126, 0.2)',
+            borderColor: 'rgba(78, 185, 126, 0.8)',
+            pointBackgroundColor: 'rgba(78, 185, 126, 1)',
+            data: <%= raw @project_radar_data[:closed_counts].to_json %>
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scale: {
+          ticks: {
+            beginAtZero: true,
+            min: 0,
+            precision: 0
+          }
+        },
+        tooltips: {
+          callbacks: {
+            title: function(tooltipItems, data) {
+              return data.labels[tooltipItems[0].index];
+            },
+            label: function(tooltipItem, data) {
+              var dataset = data.datasets[tooltipItem.datasetIndex];
+              var value = dataset.data[tooltipItem.index] || 0;
+              var label = dataset.label || '';
+              return label + ': ' + value + ' issues';
+            }
+          }
+        }
+      }
+    });
+  });
+  </script>
+  <% end %>
 <% else %>
   <p class="nodata"><%= l(:label_no_data) %></p>
 <% end %>

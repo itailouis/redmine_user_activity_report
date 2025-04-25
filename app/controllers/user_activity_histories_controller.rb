@@ -28,7 +28,7 @@ class UserActivityHistoriesController < ApplicationController
   end
 
   def show
-    # Check if current user can view this user's details
+    # Check if current user can view this user's history
     unless can_view_user_history?(@user)
       render_403
       return
@@ -40,7 +40,7 @@ class UserActivityHistoriesController < ApplicationController
 
     @histories = UserActivityHistory.date_range_for_user(@user.id, @start_date, @end_date)
 
-    # Prepare chart data
+    # Prepare trend chart data
     @chart_data = {
       labels: [],
       open: [],
@@ -51,6 +51,31 @@ class UserActivityHistoriesController < ApplicationController
       @chart_data[:labels] << history.activity_date.strftime("%Y-%m-%d")
       @chart_data[:open] << history.open_issues_count
       @chart_data[:closed] << history.closed_issues_count
+    end
+
+    # Prepare project contribution radar chart data
+    @project_radar_data = {
+      labels: [],
+      open_counts: [],
+      closed_counts: [],
+      total_counts: []
+    }
+
+    # Get the latest history record to use for the radar chart
+    latest_history = @histories.order(activity_date: :desc).first
+
+    if latest_history && latest_history.projects_summary.present?
+      # Sort projects by total issue count (descending) and take top 8 for readability
+      top_projects = latest_history.projects_summary.values
+                     .sort_by { |p| -(p[:total_count] || 0) }
+                     .take(8)
+
+      top_projects.each do |project|
+        @project_radar_data[:labels] << project[:name]
+        @project_radar_data[:open_counts] << project[:open_count]
+        @project_radar_data[:closed_counts] << project[:closed_count]
+        @project_radar_data[:total_counts] << project[:total_count]
+      end
     end
   end
 
