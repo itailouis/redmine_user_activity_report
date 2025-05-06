@@ -12,8 +12,8 @@ namespace :redmine do
           next if UserActivityHistory.where(user_id: user.id, activity_date: today).exists?
 
           # Get issue counts
-          open_count = Issue.visible.where(assigned_to_id: user.id).open.count
-          closed_count = Issue.visible.where(
+          open_count = Issue.where(assigned_to_id: user.id).open.count
+          closed_count = Issue.where(
             status_id: IssueStatus.where(is_closed: true).pluck(:id),
             assigned_to_id: user.id
           ).count
@@ -25,12 +25,12 @@ namespace :redmine do
           Project.all.each do |project|
             next unless user.allowed_to?(:view_issues, project)
 
-            project_open_count = Issue.visible.where(
+            project_open_count = Issue.where(
               assigned_to_id: user.id,
               project_id: project.id
             ).open.count
 
-            project_closed_count = Issue.visible.where(
+            project_closed_count = Issue.where(
               assigned_to_id: user.id,
               project_id: project.id,
               status_id: IssueStatus.where(is_closed: true).pluck(:id)

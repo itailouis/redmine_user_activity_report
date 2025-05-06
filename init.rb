@@ -1,4 +1,5 @@
 Redmine::Plugin.register :redmine_user_activity_report do
+
   name 'User Activity Report'
   author 'Itai Louis Zulu'
   description 'Shows a report on when users last logged in and how many issues they have in each project'
@@ -49,11 +50,19 @@ end
  # Add this to the bottom of init.rb
  Rails.configuration.to_prepare do
    # Set up scheduled task if Rails Cron is available (usually in production)
-   if Redmine::Plugin.installed?(:redmine_cron) && Rails.env.production?
+   if Redmine::Plugin.installed?(:redmine_cron)
+     begin
+       # Use logger to debug
+       Rails.logger.info "Attempting to register User Activity Report cron job"
      Redmine::Cron::CronJob.create(
        name: 'Record User Activity',
-       schedule: '*/10 * * * *', # Run at midnight every day
-       command: 'rake redmine:plugins:redmine_user_activity_report:record_daily_activity'
+       schedule: '* * * * *', # Run at midnight every day
+       command: 'rake redmine:plugins:user_activity_report:record_daily_activity'
      )
+       Rails.logger.info "Successfully registered User Activity Report cron job"
+     rescue => e
+       # Log any errors
+       Rails.logger.error "Failed to register User Activity Report cron job: #{e.message}"
+     end
    end
  end
