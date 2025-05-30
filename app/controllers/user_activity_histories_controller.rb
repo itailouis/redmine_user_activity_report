@@ -65,10 +65,29 @@ class UserActivityHistoriesController < ApplicationController
     latest_history = @histories.order(activity_date: :desc).first
 
     if latest_history && latest_history.projects_summary.present?
-      # Sort projects by total issue count (descending) and take top 8 for readability
-      top_projects = latest_history.projects_summary.values
-                     .sort_by { |p| -(p[:total_count] || 0) }
-                     .take(8)
+        # Handle both string and symbol keys
+        projects_data = latest_history.projects_summary
+
+        # Convert to array for sorting, handle both string and symbol keys
+        projects_array = projects_data.map do |project_id, data|
+          # Handle both hash formats
+          if data.is_a?(Hash)
+            {
+              id: project_id,
+              name: data['name'] || data[:name],
+              open_count: data['open_count'] || data[:open_count] || 0,
+              closed_count: data['closed_count'] || data[:closed_count] || 0,
+              total_count: data['total_count'] || data[:total_count] || 0
+            }
+          else
+            nil
+          end
+        end.compact
+
+      top_projects = projects_array.sort_by { |p| -p[:total_count] }.take(8)
+
+        puts "Debug: Top projects count: #{top_projects.count}" if Rails.env.development?
+
 
       top_projects.each do |project|
         @project_radar_data[:labels] << project[:name]
