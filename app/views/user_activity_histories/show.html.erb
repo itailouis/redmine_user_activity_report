@@ -41,6 +41,16 @@
   </div>
 
   <% if true %>
+  <% if true %>
+    <div style="background: #f0f0f0; padding: 10px; margin: 10px 0;">
+      <strong>Debug Info:</strong><br>
+      Histories count: <%= @histories.count %><br>
+      Latest history: <%= @histories.order(activity_date: :desc).first&.activity_date %><br>
+      Projects summary present: <%= @histories.order(activity_date: :desc).first&.projects_summary&.present? %><br>
+      Radar data labels: <%= @project_radar_data[:labels].inspect %><br>
+      Radar data counts: <%= @project_radar_data[:open_counts].inspect %>
+    </div>
+  <% end %>
     <h3><%= l(:label_project_contribution) %></h3>
     <div class="box">
       <div class="chart-container radar-chart-container">
