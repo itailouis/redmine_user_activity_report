@@ -1,3 +1,4 @@
+# app/controllers/user_activity_histories_controller.rb - FIXED VERSION
 class UserActivityHistoriesController < ApplicationController
   layout 'admin'
 
@@ -64,30 +65,55 @@ class UserActivityHistoriesController < ApplicationController
     # Get the latest history record to use for the radar chart
     latest_history = @histories.order(activity_date: :desc).first
 
-    if latest_history && latest_history.projects_summary.present?
-        # Handle both string and symbol keys
-        projects_data = latest_history.projects_summary
+    # DEBUG: Log what we're getting
+    Rails.logger.info "=== PROJECT RADAR DEBUG ==="
+    Rails.logger.info "Latest history exists: #{latest_history.present?}"
+    if latest_history
+      Rails.logger.info "Projects summary raw: #{latest_history.read_attribute(:projects_summary)}"
+      Rails.logger.info "Projects summary present: #{latest_history.projects_summary.present?}"
+      Rails.logger.info "Projects summary class: #{latest_history.projects_summary.class}"
+      Rails.logger.info "Projects summary content: #{latest_history.projects_summary.inspect}"
+    end
 
-        # Convert to array for sorting, handle both string and symbol keys
-        projects_array = projects_data.map do |project_id, data|
-          # Handle both hash formats
-          if data.is_a?(Hash)
-            {
-              id: project_id,
-              name: data['name'] || data[:name],
-              open_count: data['open_count'] || data[:open_count] || 0,
-              closed_count: data['closed_count'] || data[:closed_count] || 0,
-              total_count: data['total_count'] || data[:total_count] || 0
-            }
-          else
-            nil
-          end
-        end.compact
+    # Try multiple approaches to get project data
+    projects_data = nil
 
+    # Approach 1: Try to use stored projects_summary
+    if latest_history && latest_history.projects_summary.present? && latest_history.projects_summary.is_a?(Hash)
+      projects_data = latest_history.projects_summary
+      Rails.logger.info "Using stored projects_summary"
+    end
+
+    # Approach 2: If no stored data, generate it live from current data
+    if projects_data.blank?
+      Rails.logger.info "No stored data, generating live project data"
+      projects_data = generate_current_project_data(@user)
+    end
+
+    # Process the project data for the radar chart
+    if projects_data.present? && projects_data.is_a?(Hash)
+      Rails.logger.info "Processing project data: #{projects_data.keys.count} projects"
+
+      # Convert to array for sorting, handle both string and symbol keys
+      projects_array = projects_data.map do |project_id, data|
+        # Handle both hash formats
+        if data.is_a?(Hash)
+          {
+            id: project_id,
+            name: data['name'] || data[:name],
+            open_count: (data['open_count'] || data[:open_count] || 0).to_i,
+            closed_count: (data['closed_count'] || data[:closed_count] || 0).to_i,
+            total_count: (data['total_count'] || data[:total_count] || 0).to_i
+          }
+        else
+          nil
+        end
+      end.compact
+
+      # Sort projects by total issue count (descending) and take top 8 for readability
       top_projects = projects_array.sort_by { |p| -p[:total_count] }.take(8)
 
-        puts "Debug: Top projects count: #{top_projects.count}" if Rails.env.development?
-
+      Rails.logger.info "Top projects count: #{top_projects.count}"
 
       top_projects.each do |project|
         @project_radar_data[:labels] << project[:name]
@@ -96,9 +122,46 @@ class UserActivityHistoriesController < ApplicationController
         @project_radar_data[:total_counts] << project[:total_count]
       end
     end
+
+    Rails.logger.info "Final radar data labels: #{@project_radar_data[:labels]}"
+    Rails.logger.info "=== END PROJECT RADAR DEBUG ==="
   end
 
   private
+
+  # Generate current project data if stored data is not available
+  def generate_current_project_data(user)
+    projects_data = {}
+
+    Project.all.each do |project|
+      # Check if user has any issues in this project
+      project_open_count = Issue.where(
+        assigned_to_id: user.id,
+        project_id: project.id
+      ).open.count
+
+      project_closed_count = Issue.where(
+        assigned_to_id: user.id,
+        project_id: project.id,
+        status_id: IssueStatus.where(is_closed: true).pluck(:id)
+      ).count
+
+      project_total = project_open_count + project_closed_count
+
+      # Only include projects with issues
+      if project_total > 0
+        projects_data[project.id.to_s] = {
+          'name' => project.name,
+          'open_count' => project_open_count,
+          'closed_count' => project_closed_count,
+          'total_count' => project_total
+        }
+      end
+    end
+
+    Rails.logger.info "Generated live project data: #{projects_data.keys.count} projects"
+    projects_data
+  end
 
   def require_history_allowed
     # First check if history access is enabled in settings
@@ -154,3 +217,7 @@ class UserActivityHistoriesController < ApplicationController
     Member.where(:project_id => managed_project_ids, :user_id => user.id).any?
   end
 end
+
+# Also create this debug rake task to check what's in the database:
+# lib/tasks/debug_user_activity.rake
+
