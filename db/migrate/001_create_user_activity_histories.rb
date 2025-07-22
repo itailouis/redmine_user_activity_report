@@ -10,6 +10,15 @@ class CreateUserActivityHistories < ActiveRecord::Migration[5.2]
       t.text :projects_summary
       t.timestamps
     end
+    
+    create_table :project_overview_settings do |t|
+      t.references :project, null: false, foreign_key: true
+      t.json :dashboard_config
+      t.boolean :enabled, default: true
+      t.timestamps
+    end
+    
+    add_index :project_overview_settings, :project_id, unique: true
 
     add_index :user_activity_histories, [:user_id, :activity_date], unique: true
   end

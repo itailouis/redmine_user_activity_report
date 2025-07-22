@@ -1,0 +1,203 @@
+<div class="project-overview">
+  <div class="contextual">
+    <%= link_to l(:label_overall_activity), project_overview_path(@project), :class => 'icon icon-stats' %>
+  </div>
+
+  <h2><%= l(:label_project_overview) %></h2>
+  
+  <% content_for :header_tags do %>
+    <%= stylesheet_link_tag 'reports', plugin: 'redmine_user_activity_report' %>
+    <%= javascript_include_tag 'Chart.bundle.min.js' %>
+    <%= javascript_include_tag 'projects_overview', plugin: 'redmine_user_activity_report' %>
+  <% end %>
+  
+  <script>
+    // Pass chart data to JavaScript
+    const chartData = <%= @chart_data.to_json.html_safe %>;
+  </script>
+
+  <!-- Project Health Indicator -->
+  <div class="splitcontentleft">
+    <div class="project-health">
+      <h3><%= l(:label_project_health) %></h3>
+      <div class="health-indicator health-<%= @overview_data[:project_health] %>">
+        <span class="health-status"><%= l("health_#{@overview_data[:project_health]}".to_sym) %></span>
+        <span class="completion-rate"><%= @overview_data[:completion_rate] %>% <%= l(:label_complete) %></span>
+      </div>
+    </div>
+
+    <!-- Quick Stats -->
+    <div class="project-stats">
+      <h3><%= l(:label_statistics) %></h3>
+      <div class="stats-grid">
+        <div class="stat-item">
+          <span class="stat-number"><%= @overview_data[:total_issues] %></span>
+          <span class="stat-label"><%= l(:label_issue_plural) %></span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-number"><%= @overview_data[:open_issues] %></span>
+          <span class="stat-label"><%= l(:label_open_issues) %></span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-number"><%= @overview_data[:closed_issues] %></span>
+          <span class="stat-label"><%= l(:label_closed_issues) %></span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-number"><%= number_with_precision(@overview_data[:total_time_entries], precision: 1) %></span>
+          <span class="stat-label"><%= l(:label_spent_time) %></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Issue Breakdown -->
+    <div class="issue-breakdown">
+      <h3><%= l(:label_issue_breakdown) %></h3>
+      
+      <div class="breakdown-section">
+        <h4><%= l(:field_status) %></h4>
+        <% @overview_data[:status_breakdown].each do |status| %>
+          <div class="breakdown-item">
+            <span class="item-label"><%= status[:name] %></span>
+            <span class="item-count"><%= status[:count] %></span>
+          </div>
+        <% end %>
+      </div>
+
+      <div class="breakdown-section">
+        <h4><%= l(:field_priority) %></h4>
+        <% @overview_data[:priority_breakdown].each do |priority| %>
+          <div class="breakdown-item">
+            <span class="item-label"><%= priority[:name] %></span>
+            <span class="item-count"><%= priority[:count] %></span>
+          </div>
+        <% end %>
+      </div>
+
+      <div class="breakdown-section">
+        <h4><%= l(:field_tracker) %></h4>
+        <% @overview_data[:tracker_breakdown].each do |tracker| %>
+          <div class="breakdown-item">
+            <span class="item-label"><%= tracker[:name] %></span>
+            <span class="item-count"><%= tracker[:count] %></span>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  </div>
+
+  <div class="splitcontentright">
+    <!-- Milestone Progress -->
+    <% if @overview_data[:milestone_progress].any? %>
+    <div class="milestone-progress">
+      <h3><%= l(:label_roadmap) %></h3>
+      <% @overview_data[:milestone_progress].each do |milestone| %>
+        <div class="milestone-item">
+          <div class="milestone-header">
+            <span class="milestone-name"><%= milestone[:name] %></span>
+            <span class="milestone-status status-<%= milestone[:status] %>">
+              <%= l("milestone_#{milestone[:status]}".to_sym) %>
+            </span>
+          </div>
+          <div class="progress-bar">
+            <div class="progress-fill" style="width: <%= milestone[:progress] %>%"></div>
+          </div>
+          <div class="milestone-details">
+            <span><%= milestone[:closed_issues] %>/<%= milestone[:total_issues] %> <%= l(:label_issue_plural) %></span>
+            <% if milestone[:due_date] %>
+              <span class="due-date"><%= l(:field_due_date) %>: <%= format_date(milestone[:due_date]) %></span>
+            <% end %>
+          </div>
+        </div>
+      <% end %>
+    </div>
+    <% end %>
+
+    <!-- Team Statistics -->
+    <div class="team-statistics">
+      <h3><%= l(:label_team_statistics) %></h3>
+      <div class="team-stats">
+        <div class="team-stat">
+          <span class="stat-label"><%= l(:label_total_members) %></span>
+          <span class="stat-value"><%= @team_stats[:total_members] %></span>
+        </div>
+        <div class="team-stat">
+          <span class="stat-label"><%= l(:label_active_members) %></span>
+          <span class="stat-value"><%= @team_stats[:active_members] %></span>
+        </div>
+        <div class="team-stat">
+          <span class="stat-label"><%= l(:label_workload_balance) %></span>
+          <span class="stat-value balance-<%= @team_stats[:workload_balance] %>">
+            <%= l("balance_#{@team_stats[:workload_balance]}".gsub('-', '_')).to_sym %>
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Top Contributors -->
+    <% if @team_stats[:top_contributors].any? %>
+    <div class="top-contributors">
+      <h3><%= l(:label_top_contributors) %></h3>
+      <% @team_stats[:top_contributors].each_with_index do |contributor, index| %>
+        <div class="contributor-item">
+          <span class="contributor-rank"><%= index + 1 %></span>
+          <span class="contributor-name"><%= contributor[:user] %></span>
+          <span class="contributor-score"><%= contributor[:score] %></span>
+        </div>
+      <% end %>
+    </div>
+    <% end %>
+
+    <!-- Recent Activity -->
+    <div class="recent-activity">
+      <h3><%= l(:label_activity) %></h3>
+      <% @recent_activities.each do |activity| %>
+        <div class="activity-item">
+          <div class="activity-user"><%= activity[:user] %></div>
+          <div class="activity-description"><%= activity[:action] %></div>
+          <div class="activity-date"><%= time_tag(activity[:date]) %></div>
+        </div>
+      <% end %>
+    </div>
+  </div>
+
+  <div style="clear: both;"></div>
+  
+  <!-- Charts Section -->
+  <div class="charts-section">
+    <h3><%= l(:label_project_charts) %></h3>
+    
+    <div class="charts-container">
+      <div class="chart-wrapper">
+        <div class="chart-header">
+          <h4><%= l(:label_issues_over_time) %></h4>
+          <button class="export-chart-btn" data-chart-id="issues-over-time-chart"><%= l(:button_export) %></button>
+        </div>
+        <canvas id="issues-over-time-chart"></canvas>
+      </div>
+      
+      <div class="chart-wrapper">
+        <div class="chart-header">
+          <h4><%= l(:label_burndown) %></h4>
+          <button class="export-chart-btn" data-chart-id="burndown-chart"><%= l(:button_export) %></button>
+        </div>
+        <canvas id="burndown-chart"></canvas>
+      </div>
+      
+      <div class="chart-wrapper">
+        <div class="chart-header">
+          <h4><%= l(:label_workload_distribution) %></h4>
+          <button class="export-chart-btn" data-chart-id="workload-chart"><%= l(:button_export) %></button>
+        </div>
+        <canvas id="workload-chart"></canvas>
+      </div>
+      
+      <div class="chart-wrapper">
+        <div class="chart-header">
+          <h4><%= l(:label_resolution_time) %></h4>
+          <button class="export-chart-btn" data-chart-id="resolution-time-chart"><%= l(:button_export) %></button>
+        </div>
+        <canvas id="resolution-time-chart"></canvas>
+      </div>
+    </div>
+  </div>
+</div>

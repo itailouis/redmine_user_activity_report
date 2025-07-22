@@ -1,0 +1,169 @@
+<% content_for :header_tags do %>
+  <%= stylesheet_link_tag 'reports', plugin: 'redmine_user_activity_report' %>
+  <%= javascript_include_tag 'reports', plugin: 'redmine_user_activity_report' %>
+<% end %>
+
+<h2><%= l(:label_sla_report) %></h2>
+
+<div class="box">
+  <div class="box-header">
+    <h3><%= l(:label_date_range) %></h3>
+  </div>
+  
+  <div class="box-content">
+    <div class="date-range-form">
+      <%= form_tag reports_sla_path, method: :get do %>
+        <label for="start_date"><%= l(:field_start_date) %>:</label>
+        <%= text_field_tag 'start_date', @start_date, class: 'datepicker', size: 10 %>
+        
+        <label for="end_date"><%= l(:field_end_date) %>:</label>
+        <%= text_field_tag 'end_date', @end_date, class: 'datepicker', size: 10 %>
+        
+        <%= submit_tag l(:button_apply), class: 'button-small' %>
+      <% end %>
+    </div>
+  </div>
+</div>
+
+<div class="box">
+  <div class="box-header">
+    <h3><%= l(:label_sla_statistics) %></h3>
+  </div>
+  
+  <div class="box-content">
+    <div class="stats-table">
+      <table>
+        <thead>
+          <tr>
+            <th><%= l(:field_status) %></th>
+            <th><%= l(:field_count) %></th>
+            <th><%= l(:field_avg_response_time) %> (<%= l(:days) %>)</th>
+            <th><%= l(:field_avg_resolution_time) %> (<%= l(:days) %>)</th>
+            <th><%= l(:field_sla_compliance) %> (%)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @sla_stats.each do |status_id, stats| %>
+            <tr>
+              <td><%= stats[:name] %></td>
+              <td><%= stats[:count] %></td>
+              <td><%= stats[:avg_response_time] %></td>
+              <td><%= stats[:avg_resolution_time] %></td>
+              <td><%= stats[:sla_compliance] %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div class="charts-section">
+  <div class="charts-container">
+    <div class="chart-wrapper">
+      <div class="chart-header">
+        <h4><%= l(:label_sla_by_status) %></h4>
+        <button class="export-chart-btn" data-chart="sla-chart"><%= l(:button_export) %></button>
+      </div>
+      <div class="chart">
+        <canvas id="sla-chart"></canvas>
+      </div>
+    </div>
+    
+    <div class="chart-wrapper">
+      <div class="chart-header">
+        <h4><%= l(:label_time_in_status) %></h4>
+        <button class="export-chart-btn" data-chart="time-in-status-chart"><%= l(:button_export) %></button>
+      </div>
+      <div class="chart">
+        <canvas id="time-in-status-chart"></canvas>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  $(document).ready(function() {
+    // SLA Chart
+    if (document.getElementById('sla-chart')) {
+      const ctx = document.getElementById('sla-chart').getContext('2d');
+      const slaChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: <%= raw @sla_stats.map { |status_id, stats| stats[:name] }.to_json %>,
+          datasets: [
+            {
+              label: '<%= l(:field_avg_response_time) %>',
+              data: <%= raw @sla_stats.map { |status_id, stats| stats[:avg_response_time] }.to_json %>,
+              backgroundColor: 'rgba(75, 192, 192, 0.2)',
+              borderColor: 'rgb(75, 192, 192)',
+              borderWidth: 1
+            },
+            {
+              label: '<%= l(:field_avg_resolution_time) %>',
+              data: <%= raw @sla_stats.map { |status_id, stats| stats[:avg_resolution_time] }.to_json %>,
+              backgroundColor: 'rgba(255, 99, 132, 0.2)',
+              borderColor: 'rgb(255, 99, 132)',
+              borderWidth: 1
+            },
+            {
+              label: '<%= l(:field_sla_compliance) %>',
+              data: <%= raw @sla_stats.map { |status_id, stats| stats[:sla_compliance] }.to_json %>,
+              backgroundColor: 'rgba(54, 162, 235, 0.2)',
+              borderColor: 'rgb(54, 162, 235)',
+              borderWidth: 1
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          scales: {
+            y: {
+              beginAtZero: true
+            }
+          }
+        }
+      });
+    }
+    
+    // Time in Status Chart
+    if (document.getElementById('time-in-status-chart')) {
+      const ctx = document.getElementById('time-in-status-chart').getContext('2d');
+      const timeInStatusChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: <%= raw @time_in_status.map { |status_id, data| data[:name] }.to_json %>,
+          datasets: [
+            {
+              label: '<%= l(:field_avg_time) %> (<%= l(:days) %>)',
+              data: <%= raw @time_in_status.map { |status_id, data| data[:avg_time] }.to_json %>,
+              backgroundColor: 'rgba(153, 102, 255, 0.2)',
+              borderColor: 'rgb(153, 102, 255)',
+              borderWidth: 1
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          scales: {
+            y: {
+              beginAtZero: true
+            }
+          }
+        }
+      });
+    }
+    
+    // Export chart functionality
+    $('.export-chart-btn').on('click', function() {
+      const chartId = $(this).data('chart');
+      const canvas = document.getElementById(chartId);
+      const image = canvas.toDataURL('image/png');
+      
+      const link = document.createElement('a');
+      link.href = image;
+      link.download = 'sla-report-' + chartId + '.png';
+      link.click();
+    });
+  });
+</script>

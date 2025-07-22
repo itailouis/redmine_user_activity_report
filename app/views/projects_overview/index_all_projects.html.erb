@@ -1,0 +1,87 @@
+<% content_for :header_tags do %>
+  <%= stylesheet_link_tag 'reports', :plugin => 'redmine_user_activity_report' %>
+<% end %>
+
+<div class="contextual">
+  <% if User.current.admin? %>
+    <%= link_to l(:label_project_new), new_project_path, :class => 'icon icon-add' %>
+  <% end %>
+</div>
+
+<h2><%= l(:label_project_plural) %> <%= l(:label_overview) %></h2>
+
+<div class="projects-overview">
+  <div class="box">
+    <h3><%= l(:label_project_plural) %></h3>
+    
+    <% if @projects.any? %>
+      <table class="list projects">
+        <thead>
+          <tr>
+            <th><%= l(:label_project) %></th>
+            <th><%= l(:field_description) %></th>
+            <th><%= l(:label_issue_plural) %></th>
+            <th><%= l(:label_open_issues) %></th>
+            <th><%= l(:label_last_activity) %></th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @projects.each do |project| %>
+            <tr class="<%= cycle('odd', 'even') %>">
+              <td class="name">
+                <%= link_to project.name, project_path(project) %>
+                <% if project_overview_path(project_id: project.identifier) %>
+                  <%= link_to l(:label_details), project_overview_path(project_id: project.identifier), class: 'icon icon-magnifier' %>
+                <% end %>
+              </td>
+              <td class="description"><%= textilizable(project.short_description, :project => project) %></td>
+              <td class="issues"><%= project.issues.count %></td>
+              <td class="open-issues"><%= project.issues.open.count %></td>
+              <td class="last-activity">
+                <% 
+                  # Get the latest activity timestamp from issues or time entries
+                  latest_issue_date = project.issues.maximum(:updated_on)
+                  latest_time_entry_date = project.time_entries.maximum(:updated_on) if project.respond_to?(:time_entries)
+                  latest_date = [
+                    latest_issue_date,
+                    latest_time_entry_date,
+                    project.updated_on
+                  ].compact.max
+                %>
+                <% if latest_date.present? %>
+                  <%= format_time(latest_date) %>
+                <% else %>
+                  <%= l(:label_no_data) %>
+                <% end %>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    <% else %>
+      <p class="nodata"><%= l(:label_no_data) %></p>
+    <% end %>
+  </div>
+  
+  <% if User.current.admin? %>
+    <div class="box">
+      <h3><%= l(:label_statistics) %></h3>
+      <ul>
+        <li><%= l(:label_total_projects) %>: <%= @projects.count %></li>
+        <li><%= l(:label_total_issues) %>: <%= Issue.count %></li>
+        <li><%= l(:label_open_issues) %>: <%= Issue.open.count %></li>
+        <li><%= l(:label_closed_issues) %>: <%= Issue.count - Issue.open.count %></li>
+      </ul>
+    </div>
+  <% end %>
+</div>
+
+<% content_for :sidebar do %>
+  <h3><%= l(:label_project_plural) %></h3>
+  <% if User.current.admin? %>
+    <ul>
+      <li><%= link_to l(:label_project_new), new_project_path %></li>
+      <li><%= link_to l(:label_administration), { :controller => 'admin', :action => 'projects' } %></li>
+    </ul>
+  <% end %>
+<% end %>

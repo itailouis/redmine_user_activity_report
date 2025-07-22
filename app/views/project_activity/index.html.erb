@@ -1,0 +1,110 @@
+<% content_for :header_tags do %>
+  <%= stylesheet_link_tag 'project_activity', plugin: 'redmine_user_activity_report' %>
+  <%= javascript_include_tag 'project_activity', plugin: 'redmine_user_activity_report' %>
+<% end %>
+
+<h2><%= l(:label_project_activity_report) %></h2>
+
+<div class="box">
+  <div class="box-header">
+    <h3><%= @project.name %></h3>
+  </div>
+  
+  <div class="box-content">
+    <div class="date-range-form">
+      <%= form_tag project_activity_path(@project), method: :get do %>
+        <%= text_field_tag :start_date, @start_date, class: 'datepicker' %>
+        <%= text_field_tag :end_date, @end_date, class: 'datepicker' %>
+        <%= submit_tag l(:button_apply) %>
+      <% end %>
+    </div>
+
+    <div class="charts-container">
+      <div class="chart" id="daily-issues-chart"></div>
+      <div class="chart" id="monthly-issues-chart"></div>
+    </div>
+
+    <div class="stats-table">
+      <h3><%= l(:label_issue_statistics) %></h3>
+      <table class="list">
+        <tr>
+          <th><%= l(:field_status) %></th>
+          <th><%= l(:field_count) %></th>
+        </tr>
+        <% IssueStatus.all.each do |status| %>
+          <tr>
+            <td><%= status.name %></td>
+            <td><%= @status_counts[status.id].try(:count) || 0 %></td>
+          </tr>
+        <% end %>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const dailyData = <%= @daily_activities.to_json.html_safe %>
+  const monthlyData = <%= @monthly_activities.to_json.html_safe %>
+
+  // Daily issues chart
+  new Chart(document.getElementById('daily-issues-chart'), {
+    type: 'line',
+    data: {
+      labels: Object.keys(dailyData),
+      datasets: [
+        {
+          label: '<%= l(:field_issues_created) %>',
+          data: Object.values(dailyData).map(d => d.issues_created),
+          borderColor: 'rgb(75, 192, 192)',
+          fill: false
+        },
+        {
+          label: '<%= l(:field_issues_closed) %>',
+          data: Object.values(dailyData).map(d => d.issues_closed),
+          borderColor: 'rgb(255, 99, 132)',
+          fill: false
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      title: {
+        display: true,
+        text: '<%= l(:label_daily_activity) %>'
+      }
+    }
+  });
+
+  // Monthly issues chart
+  new Chart(document.getElementById('monthly-issues-chart'), {
+    type: 'bar',
+    data: {
+      labels: Object.keys(monthlyData),
+      datasets: [
+        {
+          label: '<%= l(:field_issues_created) %>',
+          data: Object.values(monthlyData).map(d => d.issues_created),
+          backgroundColor: 'rgba(75, 192, 192, 0.2)',
+          borderColor: 'rgb(75, 192, 192)',
+          borderWidth: 1
+        },
+        {
+          label: '<%= l(:field_issues_closed) %>',
+          data: Object.values(monthlyData).map(d => d.issues_closed),
+          backgroundColor: 'rgba(255, 99, 132, 0.2)',
+          borderColor: 'rgb(255, 99, 132)',
+          borderWidth: 1
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      title: {
+        display: true,
+        text: '<%= l(:label_monthly_activity) %>'
+      }
+    }
+  });
+});
+</script>

@@ -1,0 +1,59 @@
+<% content_for :header_tags do %>
+  <%= stylesheet_link_tag 'reports', plugin: 'redmine_user_activity_report' %>
+  <%= javascript_include_tag 'reports', plugin: 'redmine_user_activity_report' %>
+<% end %>
+
+<h2><%= l(:label_activity_reports) %></h2>
+
+<div class="box">
+  <div class="box-header">
+    <h3><%= l(:label_reports) %></h3>
+  </div>
+  
+  <div class="box-content">
+    <div class="reports-grid">
+      <!-- Custom Reports -->
+      <div class="report-card">
+        <h3><%= l(:label_sla_report) %></h3>
+        <p><%= l(:description_sla_report) %></p>
+        <%= link_to l(:button_view_report), reports_sla_path, class: 'button' %>
+      </div>
+
+      <div class="report-card">
+        <h3><%= l(:label_queue_wait_time) %></h3>
+        <p><%= l(:description_queue_wait_time) %></p>
+        <%= link_to l(:button_view_report), reports_queue_wait_path, class: 'button' %>
+      </div>
+
+      <div class="report-card">
+        <h3><%= l(:label_oldest_issues) %></h3>
+        <p><%= l(:description_oldest_issues) %></p>
+        <%= link_to l(:button_view_report), reports_oldest_issues_path, class: 'button' %>
+      </div>
+
+      <div class="report-card">
+        <h3><%= l(:label_enroll_roadmap) %></h3>
+        <p><%= l(:description_enroll_roadmap) %></p>
+        <%= link_to l(:button_view_report), reports_roadmap_path, class: 'button' %>
+      </div>
+
+      <div class="report-card">
+        <h3><%= l(:label_daily_activity) %></h3>
+        <p><%= l(:description_daily_activity) %></p>
+        <%= link_to l(:button_view_report), reports_daily_activity_path, class: 'button' %>
+      </div>
+
+      <div class="report-card">
+        <h3><%= l(:label_deficiencies) %></h3>
+        <p><%= l(:description_deficiencies) %></p>
+        <%= link_to l(:button_view_report), reports_deficiencies_path, class: 'button' %>
+      </div>
+
+      <div class="report-card">
+        <h3><%= l(:label_burn_down) %></h3>
+        <p><%= l(:description_burn_down) %></p>
+        <%= link_to l(:button_view_report), reports_burn_down_path, class: 'button' %>
+      </div>
+    </div>
+  </div>
+</div>

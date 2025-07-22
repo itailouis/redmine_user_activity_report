@@ -15,11 +15,64 @@ en:
     label_activity_records: Activity Records
     label_issue_trend: Issue Trend
     label_projects_count: Projects
+    label_total_projects: Total Projects
     label_issue_count: Issue Count
     field_start_date: Start Date
     field_end_date: End Date
     field_date : Dates
     label_project_contribution: Project Contribution
+    label_last_activity: Last Activity
+    
+    # SLA Report
+    label_sla_report: SLA Report
+    label_sla_statistics: SLA Statistics
+    label_detailed_statistics: Detailed Statistics
+    label_response_resolution_times: Response & Resolution Times
+    label_sla_compliance: SLA Compliance
+    label_time_in_status: Time in Status
+    field_avg_response_time: Avg. Response Time
+    field_avg_resolution_time: Avg. Resolution Time
+    field_sla_compliance: SLA Compliance
+    field_avg_time: Average Time
+    field_status: Status
+    field_count: Count
+    text_days: days
+
+    label_project_overview: "Project Overview"
+    label_project_health: "Project Health"
+    label_statistics: "Statistics"
+    label_issue_breakdown: "Issue Breakdown"
+    label_team_statistics: "Team Statistics"
+    label_top_contributors: "Top Contributors"
+    label_total_members: "Total Members"
+    label_active_members: "Active Members (30 days)"
+    label_workload_balance: "Workload Balance"
+    label_complete: "Complete"
+    label_open_issues: "Open"
+    label_closed_issues: "Closed"
+    
+    # Project Charts
+    label_project_charts: "Project Charts"
+    label_issues_over_time: "Issues Over Time"
+    label_burndown: "Burndown Chart"
+    label_workload_distribution: "Workload Distribution"
+    label_resolution_time: "Resolution Time"
+    button_export: "Export"
+    
+    health_excellent: "Excellent"
+    health_good: "Good"
+    health_fair: "Fair"
+    health_poor: "Poor"
+    health_critical: "Critical"
+    
+    milestone_on_track: "On Track"
+    milestone_at_risk: "At Risk"
+    milestone_overdue: "Overdue"
+    milestone_completed: "Completed"
+    
+    balance_well_balanced: "Well Balanced"
+    balance_moderately_balanced: "Moderately Balanced"
+    balance_unbalanced: "Unbalanced"
 
     # Permissions
     project_module_user_activity_report: User Activity Report
