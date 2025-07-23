@@ -2,6 +2,11 @@
 
 <div class="box tabular settings">
   <p>
+    <%= content_tag(:label, l(:setting_enable_auto_daily_activity)) %>
+    <%= check_box_tag 'settings[enable_auto_daily_activity]', '1', @settings['enable_auto_daily_activity'] != '0' %>
+    <em class="info"><%= l(:text_setting_enable_auto_daily_activity_info) %></em>
+  </p>
+  <p>
     <%= content_tag(:label, l(:setting_restrict_access)) %>
     <%= check_box_tag 'settings[restrict_access]', '1', @settings['restrict_access'] == '1' %>
     <em class="info"><%= l(:text_setting_restrict_access_info) %></em>

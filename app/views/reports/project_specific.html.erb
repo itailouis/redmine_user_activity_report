@@ -1,0 +1,138 @@
+<% content_for :header_tags do %>
+  <%= stylesheet_link_tag 'reports', :plugin => 'redmine_user_activity_report' %>
+  <%= javascript_include_tag 'reports', :plugin => 'redmine_user_activity_report' %>
+  <%= javascript_include_tag 'https://www.gstatic.com/charts/loader.js' %>
+<% end %>
+
+<h2><%= l(:label_project_specific_report) %></h2>
+
+<% if @project %>
+  <div class="box">
+    <div class="filters">
+      <%= form_tag(project_specific_reports_path, method: :get, id: 'report_filters') do %>
+        <%= hidden_field_tag 'project_id', @project.id %>
+        <fieldset>
+          <legend><%= l(:label_filter_plural) %></legend>
+          <div class="splitcontent">
+            <div class="splitcontentleft">
+              <p>
+                <label for="start_date"><%= l(:field_start_date) %></label>
+                <%= date_field_tag 'start_date', @start_date, :size => 10 %><%= calendar_for('start_date') %>
+              </p>
+            </div>
+            <div class="splitcontentright">
+              <p>
+                <label for="end_date"><%= l(:field_end_date) %></label>
+                <%= date_field_tag 'end_date', @end_date, :size => 10 %><%= calendar_for('end_date') %>
+              </p>
+            </div>
+          </div>
+          <div class="buttons">
+            <%= submit_tag l(:button_apply), :class => 'button-small', :name => nil %>
+            <%= link_to l(:button_clear), project_specific_reports_path, :class => 'button-small' %>
+            <%= link_to l(:button_export), export_project_report_reports_path(project_id: @project, format: 'csv', start_date: @start_date, end_date: @end_date), 
+                        :class => 'button-small icon icon-download' %>
+          </div>
+        </fieldset>
+      <% end %>
+    </div>
+
+    <div class="report-summary">
+      <div class="splitcontent">
+        <div class="splitcontentleft">
+          <h3><%= l(:label_summary) %></h3>
+          <ul>
+            <li><%= l(:label_total_issues) %>: <%= @issues.count %></li>
+            <li><%= l(:label_open_issues) %>: <%= @open_issues.count %></li>
+            <li><%= l(:label_closed_issues) %>: <%= @closed_issues.count %></li>
+          </ul>
+        </div>
+        <div class="splitcontentright">
+          <div id="status_chart" style="width: 100%; height: 200px;"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="report-charts">
+      <h3><%= l(:label_activity_over_time) %></h3>
+      <div id="activity_chart" style="width: 100%; height: 300px;"></div>
+    </div>
+
+    <div class="report-details">
+      <h3><%= l(:label_issue_distribution) %></h3>
+      <div class="splitcontent">
+        <div class="splitcontentleft">
+          <h4><%= l(:field_status) %></h4>
+          <ul>
+            <% @issue_status_distribution.each do |status, count| %>
+              <li><%= status.name %>: <%= count %></li>
+            <% end %>
+          </ul>
+        </div>
+        <div class="splitcontentright">
+          <h4><%= l(:field_priority) %></h4>
+          <ul>
+            <% @issue_priority_distribution.each do |priority, count| %>
+              <li><%= priority.name %>: <%= count %></li>
+            <% end %>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <% content_for :header_tags do %>
+    <script type="text/javascript">
+      google.charts.load('current', {'packages':['corechart']});
+      google.charts.setOnLoadCallback(drawCharts);
+
+      function drawCharts() {
+        drawStatusChart();
+        drawActivityChart();
+      }
+
+      function drawStatusChart() {
+        var data = new google.visualization.DataTable();
+        data.addColumn('string', 'Status');
+        data.addColumn('number', 'Count');
+        data.addRows(<%= raw @status_chart_data.to_json %>);
+
+        var options = {
+          title: '<%= l(:label_issue_status_distribution) %>',
+          pieHole: 0.4,
+          chartArea: {width: '90%', height: '80%'}
+        };
+
+        var chart = new google.visualization.PieChart(document.getElementById('status_chart'));
+        chart.draw(data, options);
+      }
+
+      function drawActivityChart() {
+        var data = new google.visualization.DataTable();
+        data.addColumn('string', 'Date');
+        data.addColumn('number', '<%= l(:label_issues) %>');
+        data.addRows(<%= raw @activity_chart_data.to_json %>);
+
+        var options = {
+          title: '<%= l(:label_activity_over_time) %>',
+          hAxis: {title: '<%= l(:field_date) %>'},
+          vAxis: {title: '<%= l(:label_issue_count) %>', minValue: 0},
+          legend: 'none',
+          chartArea: {width: '90%', height: '70%'}
+        };
+
+        var chart = new google.visualization.AreaChart(document.getElementById('activity_chart'));
+        chart.draw(data, options);
+      }
+    </script>
+  <% end %>
+<% else %>
+  <div class="box">
+    <h3><%= l(:label_select_project) %></h3>
+    <ul>
+      <% @projects.each do |project| %>
+        <li><%= link_to project.name, project_specific_reports_path(project_id: project.id) %></li>
+      <% end %>
+    </ul>
+  </div>
+<% end %>

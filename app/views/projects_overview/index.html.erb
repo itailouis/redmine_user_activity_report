@@ -1,20 +1,22 @@
-<div class="project-overview">
-  <div class="contextual">
-    <%= link_to l(:label_overall_activity), project_overview_path(@project), :class => 'icon icon-stats' %>
-  </div>
 
-  <h2><%= l(:label_project_overview) %></h2>
-  
-  <% content_for :header_tags do %>
-    <%= stylesheet_link_tag 'reports', plugin: 'redmine_user_activity_report' %>
-    <%= javascript_include_tag 'Chart.bundle.min.js' %>
-    <%= javascript_include_tag 'projects_overview', plugin: 'redmine_user_activity_report' %>
-  <% end %>
-  
+<% content_for :header_tags do %>
+  <%= stylesheet_link_tag 'projects_overview', :plugin => 'redmine_user_activity_report' %>
+  <%= javascript_include_tag 'https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.4/Chart.min.js' %>
   <script>
     // Pass chart data to JavaScript
     const chartData = <%= @chart_data.to_json.html_safe %>;
   </script>
+<% end %>
+
+<% content_for :sidebar do %>
+  <h3><%= l(:label_actions) %></h3>
+  <ul>
+    <li><%= link_to l(:label_overall_activity), project_overview_path(@project), :class => 'icon icon-stats' %></li>
+  </ul>
+<% end %>
+
+<div class="project-overview">
+  <h2><%= l(:label_project_overview) %>: <%= @project.name %></h2>
 
   <!-- Project Health Indicator -->
   <div class="splitcontentleft">
@@ -86,6 +88,44 @@
   </div>
 
   <div class="splitcontentright">
+    <!-- Charts Section -->
+    <div class="charts-section">
+      <h3><%= l(:label_activity_overview) %></h3>
+      
+      <!-- Issues Over Time Chart -->
+      <div class="chart-container">
+        <h4><%= l(:label_issues_over_time) %></h4>
+        <canvas id="issues-over-time-chart" height="200"></canvas>
+        <div class="chart-actions">
+          <button class="export-chart-btn icon icon-save" data-chart-id="issues-over-time-chart">
+            <%= l(:button_export_chart) %>
+          </button>
+        </div>
+      </div>
+      
+      <!-- Priority Breakdown Chart -->
+      <div class="chart-container">
+        <h4><%= l(:label_priority_breakdown) %></h4>
+        <canvas id="priority-breakdown-chart" height="200"></canvas>
+        <div class="chart-actions">
+          <button class="export-chart-btn icon icon-save" data-chart-id="priority-breakdown-chart">
+            <%= l(:button_export_chart) %>
+          </button>
+        </div>
+      </div>
+      
+      <!-- Status Breakdown Chart -->
+      <div class="chart-container">
+        <h4><%= l(:label_status_breakdown) %></h4>
+        <canvas id="status-breakdown-chart" height="200"></canvas>
+        <div class="chart-actions">
+          <button class="export-chart-btn icon icon-save" data-chart-id="status-breakdown-chart">
+            <%= l(:button_export_chart) %>
+          </button>
+        </div>
+      </div>
+    </div>
+    
     <!-- Milestone Progress -->
     <% if @overview_data[:milestone_progress].any? %>
     <div class="milestone-progress">

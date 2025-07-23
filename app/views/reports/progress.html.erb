@@ -1,0 +1,190 @@
+<% content_for :header_tags do %>
+  <%= stylesheet_link_tag 'reports', :plugin => 'redmine_user_activity_report' %>
+  <%= javascript_include_tag 'reports', :plugin => 'redmine_user_activity_report' %>
+  <%= javascript_include_tag 'https://www.gstatic.com/charts/loader.js' %>
+<% end %>
+
+<h2><%= l(:label_progress_report) %></h2>
+
+<% if @project %>
+  <div class="box">
+    <div class="filters">
+      <%= form_tag(progress_reports_path, method: :get, id: 'report_filters') do %>
+        <%= hidden_field_tag 'project_id', @project.id %>
+        <fieldset>
+          <legend><%= l(:label_filter_plural) %></legend>
+          <div class="splitcontent">
+            <div class="splitcontentleft">
+              <p>
+                <label for="start_date"><%= l(:field_start_date) %></label>
+                <%= date_field_tag 'start_date', @start_date, :size => 10 %><%= calendar_for('start_date') %>
+              </p>
+            </div>
+            <div class="splitcontentright">
+              <p>
+                <label for="end_date"><%= l(:field_end_date) %></label>
+                <%= date_field_tag 'end_date', @end_date, :size => 10 %><%= calendar_for('end_date') %>
+              </p>
+            </div>
+          </div>
+          <div class="buttons">
+            <%= submit_tag l(:button_apply), :class => 'button-small', :name => nil %>
+            <%= link_to l(:button_clear), progress_reports_path, :class => 'button-small' %>
+            <%= link_to l(:button_export), export_progress_report_reports_path(project_id: @project, format: 'csv', start_date: @start_date, end_date: @end_date), 
+                        :class => 'button-small icon icon-download' %>
+          </div>
+        </fieldset>
+      <% end %>
+    </div>
+
+    <div class="report-summary">
+      <div class="splitcontent">
+        <div class="splitcontentleft">
+          <h3><%= l(:label_summary) %></h3>
+          <ul>
+            <li><%= l(:label_total_issues) %>: <%= @total_issues %></li>
+            <li><%= l(:label_completed_issues) %>: <%= @completed_issues %></li>
+            <li><%= l(:label_completion_rate) %>: <%= @completion_rate %>%</li>
+          </ul>
+        </div>
+        <div class="splitcontentright">
+          <div id="progress_summary" style="width: 100%; height: 200px;"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="report-versions">
+      <div class="splitcontent">
+        <div class="splitcontentleft">
+          <h3><%= l(:label_completed_versions) %></h3>
+          <% if @completed_versions.any? %>
+            <table class="list">
+              <thead>
+                <tr>
+                  <th><%= l(:field_name) %></th>
+                  <th><%= l(:field_due_date) %></th>
+                  <th><%= l(:field_completed_issues) %></th>
+                  <th><%= l(:field_completed_percent) %></th>
+                </tr>
+              </thead>
+              <tbody>
+                <% @completed_versions.each do |version| %>
+                  <tr>
+                    <td><%= link_to_version version %></td>
+                    <td><%= format_date(version.effective_date) %></td>
+                    <td><%= version.closed_issues_count %> / <%= version.fixed_issues_count %></td>
+                    <td><%= progress_bar(version.completed_percent, :width => '80px') %></td>
+                  </tr>
+                <% end %>
+              </tbody>
+            </table>
+          <% else %>
+            <p class="nodata"><%= l(:label_no_data) %></p>
+          <% end %>
+        </div>
+
+        <div class="splitcontentright">
+          <h3><%= l(:label_upcoming_versions) %></h3>
+          <% if @upcoming_versions.any? %>
+            <table class="list">
+              <thead>
+                <tr>
+                  <th><%= l(:field_name) %></th>
+                  <th><%= l(:field_due_date) %></th>
+                  <th><%= l(:field_completed_issues) %></th>
+                  <th><%= l(:field_completed_percent) %></th>
+                </tr>
+              </thead>
+              <tbody>
+                <% @upcoming_versions.each do |version| %>
+                  <tr>
+                    <td><%= link_to_version version %></td>
+                    <td><%= format_date(version.effective_date) %></td>
+                    <td><%= version.closed_issues_count %> / <%= version.fixed_issues_count %></td>
+                    <td><%= progress_bar(version.completed_percent, :width => '80px') %></td>
+                  </tr>
+                <% end %>
+              </tbody>
+            </table>
+          <% else %>
+            <p class="nodata"><%= l(:label_no_data) %></p>
+          <% end %>
+        </div>
+      </div>
+    </div>
+
+    <div class="report-charts">
+      <h3><%= l(:label_version_progress) %></h3>
+      <div id="version_progress" style="width: 100%; height: 400px;"></div>
+    </div>
+  </div>
+
+  <% content_for :header_tags do %>
+    <script type="text/javascript">
+      google.charts.load('current', {'packages':['corechart']});
+      google.charts.setOnLoadCallback(drawCharts);
+
+      function drawCharts() {
+        drawProgressSummary();
+        drawVersionProgress();
+      }
+
+      function drawProgressSummary() {
+        var data = new google.visualization.DataTable();
+        data.addColumn('string', 'Status');
+        data.addColumn('number', 'Count');
+        data.addRows([
+          ['<%= l(:label_completed) %>', <%= @completed_issues %>],
+          ['<%= l(:label_remaining) %>', <%= @total_issues - @completed_issues %>]
+        ]);
+
+        var options = {
+          title: '<%= l(:label_issue_completion) %>',
+          pieHole: 0.4,
+          chartArea: {width: '90%', height: '80%'}
+        };
+
+        var chart = new google.visualization.PieChart(document.getElementById('progress_summary'));
+        chart.draw(data, options);
+      }
+
+      function drawVersionProgress() {
+        var data = new google.visualization.DataTable();
+        data.addColumn('string', '<%= l(:field_version) %>');
+        data.addColumn('number', '<%= l(:field_completed_percent) %>');
+        data.addColumn({type: 'string', role: 'annotation'});
+        
+        var rows = [];
+        <% @progress_data.each do |version| %>
+          rows.push(['<%= version[:name] %>', <%= version[:closed] %>, '<%= version[:closed] %>%']);
+        <% end %>
+        data.addRows(rows);
+
+        var options = {
+          title: '<%= l(:label_version_progress) %>',
+          hAxis: {title: '<%= l(:field_version) %>'},
+          vAxis: {
+            title: '<%= l(:field_completed_percent) %>',
+            minValue: 0,
+            maxValue: 100,
+            format: '#%'
+          },
+          legend: 'none',
+          chartArea: {width: '90%', height: '70%'}
+        };
+
+        var chart = new google.visualization.ColumnChart(document.getElementById('version_progress'));
+        chart.draw(data, options);
+      }
+    </script>
+  <% end %>
+<% else %>
+  <div class="box">
+    <h3><%= l(:label_select_project) %></h3>
+    <ul>
+      <% @projects.each do |project| %>
+        <li><%= link_to project.name, progress_reports_path(project_id: project.id) %></li>
+      <% end %>
+    </ul>
+  </div>
+<% end %>

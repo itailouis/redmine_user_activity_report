@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title><%= l(:label_user_activity_report) %></title>
+  
+  <!-- Core Redmine styles -->
+  <%= stylesheet_link_tag 'application', :plugin => 'redmine_user_activity_report' %>
+  <%= stylesheet_link_tag 'projects_overview', :plugin => 'redmine_user_activity_report' %>
+  
+  <!-- JavaScript libraries -->
+  <%= javascript_include_tag 'jquery', :plugin => 'redmine_user_activity_report' %>
+  <%= javascript_include_tag 'jquery_ujs', :plugin => 'redmine_user_activity_report' %>
+  
+  <!-- Load Chart.js from CDN with fallback -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js" integrity="sha256-+8R+O8rZ4z1g9bEJFYJj+2u+Fpz49z1qI+6Lx+U8z0=" crossorigin="anonymous"></script>
+  <script>
+    // Fallback if CDN fails
+    if (typeof Chart === 'undefined') {
+      document.write(unescape("%3Cscript src='/plugin_assets/redmine_user_activity_report/chartjs/Chart.min.js' type='text/javascript'%3E%3C/script%3E"));
+    }
+  </script>
+  
+  <!-- Plugin JavaScript -->
+  <script>
+    // Load projects_overview.js with a fallback
+    (function() {
+      var script = document.createElement('script');
+      script.src = '<%= Redmine::Utils.relative_url_root %>/plugin_assets/redmine_user_activity_report/javascripts/projects_overview.js';
+      script.onerror = function() {
+        // Fallback to asset pipeline if direct load fails
+        var fallback = document.createElement('script');
+        fallback.src = '<%= javascript_path('projects_overview') %>';
+        document.head.appendChild(fallback);
+      };
+      document.head.appendChild(script);
+    })();
+  </script>
+  
+  <!-- CSRF and other meta tags -->
+  <%= csrf_meta_tag %>
+  <%= yield :header_tags %>
+  
+  <style type="text/css">
+    /* Basic styling for charts */
+    .chart-container {
+      position: relative;
+      height: 400px;
+      margin-bottom: 30px;
+    }
+    
+    .chart-actions {
+      margin-top: 10px;
+      text-align: right;
+    }
+  </style>
+</head>
+<body class="<%= body_css_classes %>">
+  <div id="wrapper">
+    <div id="main">
+      <%= render :partial => 'common/header' %>
+      
+      <div id="main-content" class="<%= sidebar_content? ? '' : 'nosidebar' %>">
+        <div id="content">
+          <%= render_flash_messages %>
+          <%= yield %>
+        </div>
+      </div>
+      
+      <div style="clear:both;"></div>
+    </div>
+  </div>
+  
+  <%= call_hook :view_layouts_base_body_bottom %>
+</body>
+</html>

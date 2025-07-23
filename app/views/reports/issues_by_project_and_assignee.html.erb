@@ -1,0 +1,79 @@
+<% html_title(l(:label_issues_by_project_assignee)) %>
+
+<% content_for :header_tags do %>
+  <%= stylesheet_link_tag 'reports', :plugin => 'redmine_user_activity_report', :media => 'all' %>
+  <%= javascript_include_tag 'reports', :plugin => 'redmine_user_activity_report' %>
+<% end %>
+
+<div class="contextual">
+  <%= link_to l(:button_export_csv), export_issues_by_project_and_assignee_reports_path(format: :csv, start_date: @start_date, end_date: @end_date, project_id: @selected_project&.id), 
+              class: 'icon icon-download' %>
+</div>
+
+<h2><%= l(:label_issues_by_project_assignee) %></h2>
+
+<%= form_tag(issues_by_project_and_assignee_reports_path, method: :get, id: 'query_form') do %>
+  <fieldset id="filters" class="collapsible">
+    <legend onclick="toggleFieldset(this);"><%= l(:label_filter_plural) %></legend>
+    <div>
+      <table>
+        <tr>
+          <td style="width: 200px">
+            <label for="project_id"><%= l(:field_project) %></label>
+            <% if @projects.nil? || @projects.empty? %>
+              <p class="nodata"><%= l(:label_no_projects) %></p>
+            <% else %>
+              <%= select_tag 'project_id', 
+                            options_for_select([["-- #{l(:label_all)} --", '']] + @projects.collect {|p| [p.name, p.id]}, 
+                                            @selected_project ? @selected_project.id : ''),
+                            onchange: 'this.form.submit(); return false;',
+                            class: 'select-small' %>
+            <% end %>
+          </td>
+          <td>
+            <label for="start_date"><%= l(:field_start_date) %></label>
+            <%= date_field_tag 'start_date', @start_date, size: 10, class: 'datefield' %>
+            
+            <label for="end_date" style="margin-left: 10px;"><%= l(:field_end_date) %></label>
+            <%= date_field_tag 'end_date', @end_date, size: 10, class: 'datefield' %>
+            
+            <%= submit_tag l(:button_apply), class: 'button-small' %>
+          </td>
+        </tr>
+      </table>
+    </div>
+  </fieldset>
+<% end %>
+
+<% if @report_data&.any? %>
+  <div class="autoscroll">
+    <table class="list issues">
+      <thead>
+        <tr>
+          <th><%= l(:field_project) %></th>
+          <th><%= l(:field_assignee) %></th>
+          <th class="center"><%= l(:label_issue_plural) %></th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @report_data.each do |project, assignees| %>
+          <% assignees.each do |assignee, count| %>
+            <tr class="<%= cycle('odd', 'even') %>">
+              <td><%= project %></td>
+              <td><%= assignee %></td>
+              <td class="center"><%= count %></td>
+            </tr>
+          <% end %>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+<% else %>
+  <p class="nodata"><%= l(:label_no_data) %></p>
+<% end %>
+
+<%= javascript_tag do %>
+  $(document).ready(function() {
+    $('.datefield').datepicker({dateFormat: 'yy-mm-dd'});
+  });
+<% end %>

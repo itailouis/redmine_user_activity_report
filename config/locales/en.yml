@@ -22,22 +22,85 @@ en:
     field_date : Dates
     label_project_contribution: Project Contribution
     label_last_activity: Last Activity
+    label_overall_activity: Overall Activity
+    balance_balanced : Balanced
+
+    # Reports Section
+    label_activity_reports: Activity Reports
+    label_reports: Reports
+    button_view_report: View Report
+    label_project_specific_report: Project-Specific Report
+    label_progress_report: Progress Report
+    label_summary: Summary
+    label_activity_over_time: Activity Over Time
+    label_issue_distribution: Issue Distribution
+    label_issue_status_distribution: Issue Status Distribution
+    label_issue_count: Issue Count
+    label_completed_issues: Completed Issues
+    label_completion_rate: Completion Rate
+    label_completed_versions: Completed Versions
+    label_upcoming_versions: Upcoming Versions
+    label_version_progress: Version Progress
+    label_issue_completion: Issue Completion
+    label_remaining: Remaining
+    field_completed_percent: "% Complete"
+    label_no_data: No data available
+    label_select_project: Select a project
+    
+    # Issues by Project and Assignee Report
+    label_issues_by_project_assignee: Issues by Project and Assignee
+    description_issues_by_project_assignee: View the number of issues per project per assignee
+    label_issue_plural: Issues
+    label_no_assignee: Unassigned
+    label_no_projects: No projects available
     
     # SLA Report
     label_sla_report: SLA Report
+    description_sla_report: View Service Level Agreement compliance and response times
+    
+    # Queue Wait Report
+    label_queue_wait_time: Queue Wait Time
+    description_queue_wait_time: Analyze time issues spend waiting in queues
+    
+    # Oldest Issues Report
+    label_oldest_issues: Oldest Issues
+    description_oldest_issues: Identify and address long-standing issues
+    
+    # Roadmap Report
+    label_enroll_roadmap: Project Roadmap
+    description_enroll_roadmap: Track project milestones and progress
+    
+    # Daily Activity Report
+    label_daily_activity: Daily Activity
+    description_daily_activity: Monitor daily project activities and updates
+    
+    # Deficiencies Report
+    label_deficiencies: Project Deficiencies
+    description_deficiencies: Identify and track project deficiencies
+    
+    # Burn Down Report
+    label_burn_down: Burn Down Chart
+    description_burn_down: Track project progress and remaining work
+    
+    # Common Report Terms
     label_sla_statistics: SLA Statistics
     label_detailed_statistics: Detailed Statistics
     label_response_resolution_times: Response & Resolution Times
     label_sla_compliance: SLA Compliance
     label_time_in_status: Time in Status
-    field_avg_response_time: Avg. Response Time
-    field_avg_resolution_time: Avg. Resolution Time
-    field_sla_compliance: SLA Compliance
-    field_avg_time: Average Time
+    field_avg_response_time: "Avg. Response Time"
+    field_avg_resolution_time: "Avg. Resolution Time"
+    field_avg_time: "Average Time"
     field_status: Status
     field_count: Count
     text_days: days
+    
 
+    label_activity_overview: "Activity Overview"
+    button_export_chart: "Export Chart"
+    label_priority_breakdown: "Priority Breakdown"
+    label_status_breakdown: "Status Breakdown" 
+    
     label_project_overview: "Project Overview"
     label_project_health: "Project Health"
     label_statistics: "Statistics"
@@ -58,6 +121,17 @@ en:
     label_workload_distribution: "Workload Distribution"
     label_resolution_time: "Resolution Time"
     button_export: "Export"
+
+    label_reports_dashboard: "Reports Dashboard"
+    label_projects: "Projects"
+    label_active: "Active"
+    label_active_users: "Active Users"
+    label_issues_by_status: "Issues by Status"
+    label_issues_by_priority: "Issues by Priority"
+    label_users_by_role: "Users by Role"
+    label_top_issue_authors: "Top Issue Authors"
+    label_other_reports: "Other Reports"  
+    button_export_csv: "Export CSV"
     
     health_excellent: "Excellent"
     health_good: "Good"
@@ -81,12 +155,14 @@ en:
     permission_manage_activity_history: Manage activity history
 
     # Settings
+    setting_enable_auto_daily_activity: Enable automatic daily activity recording
+    text_setting_enable_auto_daily_activity_info: When enabled, the system will automatically record daily activity when the first user visits the site each day
     setting_restrict_access: Restrict access to project members
     text_setting_restrict_access_info: When enabled, users with permission can only see activity for members of their projects
     setting_allow_project_managers: Allow project managers access
     text_setting_allow_project_managers_info: When enabled, project managers can view activity for members of their projects
     setting_allow_history_access: Enable activity history
-    text_setting_allow_history_access_info: When enabled, the activity history feature will be accessible
+    text_setting_allow_history_access_info: When enabled, users can view historical activity data
     setting_history_retention_months: History retention period
     text_setting_history_retention_info: How long to keep activity history records
 

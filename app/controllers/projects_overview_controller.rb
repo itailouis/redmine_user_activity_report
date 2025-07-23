@@ -1,13 +1,23 @@
 class ProjectsOverviewController < ApplicationController
   before_action :find_project, except: [:index]
-  before_action :authorize, except: [:index]
+  before_action :authorize_overview, except: [:index]
   before_action :require_login, only: [:index]
+  
+  # Custom authorization method that checks for either view_user_activity_report or view_project permission
+  def authorize_overview
+    if @project && !User.current.allowed_to?({:controller => params[:controller], :action => params[:action]}, @project) && 
+       !User.current.allowed_to?(:view_project, @project) && !User.current.admin?
+      render_403
+      return false
+    end
+    true
+  end
 
   def index
     if params[:project_id].present?
       begin
         @project = Project.find(params[:project_id])
-        authorize
+        authorize_overview
         @overview_data = calculate_overview_data
         @chart_data = prepare_chart_data
         @recent_activities = get_recent_activities
@@ -291,42 +301,49 @@ class ProjectsOverviewController < ApplicationController
 
   def get_recent_activities
     return [] unless @project
-    
+
     # Get issue IDs for this project
     issue_ids = @project.issues.pluck(:id)
     return [] if issue_ids.empty?
-    
+
     # Query journals for these issues
     Journal.where(journalized_id: issue_ids, journalized_type: 'Issue')
            .joins(:user)
-           .includes(:journalized, :user)
+           .includes(:user)
            .order(created_on: :desc)
            .limit(10)
            .map do |journal|
-      {
-        user: journal.user.name,
-        action: journal_action_description(journal),
-        date: journal.created_on,
-        issue: journal.journalized
-      }
-    rescue => e
-      Rails.logger.error "Error processing journal: #{e.message}"
-      nil
+      begin
+        issue = Issue.find_by(id: journal.journalized_id)
+        next unless issue # Skip if issue not found
+
+        {
+          user: journal.user.name,
+          action: journal_action_description(journal, issue),
+          date: journal.created_on,
+          issue: issue
+        }
+      rescue => e
+        Rails.logger.error "Error processing journal: #{e.message}"
+        nil
+      end
     end.compact
   end
 
-  def journal_action_description(journal)
+  def journal_action_description(journal, issue = nil)
     case journal.journalized_type
     when 'Issue'
+      issue_id = issue&.id || journal.journalized_id
       if journal.details.any?
-        "Updated issue ##{journal.journalized.id}"
+        "Updated issue ##{issue_id}"
       else
-        "Added note to issue ##{journal.journalized.id}"
+        "Added note to issue ##{issue_id}"
       end
     else
       "Updated #{journal.journalized_type.downcase}"
     end
   end
+
 
   def calculate_team_statistics
     return empty_team_statistics unless @project
@@ -378,6 +395,8 @@ class ProjectsOverviewController < ApplicationController
       }
     end.sort_by { |contributor| -contributor[:score] }.first(5)
   end
+
+
 
   def calculate_workload_balance(team_members = nil)
     return 'unknown' unless @project

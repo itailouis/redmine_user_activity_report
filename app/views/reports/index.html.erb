@@ -1,59 +1,150 @@
 <% content_for :header_tags do %>
-  <%= stylesheet_link_tag 'reports', plugin: 'redmine_user_activity_report' %>
-  <%= javascript_include_tag 'reports', plugin: 'redmine_user_activity_report' %>
+  <%= stylesheet_link_tag 'reports', :plugin => 'redmine_user_activity_report', :media => 'all' %>
+  <%= javascript_include_tag 'reports', :plugin => 'redmine_user_activity_report' %>
+  <%= javascript_include_tag 'https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js', integrity: 'sha512-ElRFoEQdI5Ht6kZvyzXhYG9NqjtkmlkfYk0wr6wHxEF9nFQh2pKjYF6X3j6kZ8z2vj5z5z5z5z5z5z5z5z5z5' %>
+  <script>
+    // Pass chart data from controller to JavaScript
+    const chartData = <%= raw @chart_data.to_json %>;
+    const reportStats = {
+      projects: <%= raw @project_stats.to_json %>,
+      issues: <%= raw @issue_stats.to_json %>,
+      users: <%= raw @user_stats.to_json %>
+    };
+  </script>
 <% end %>
 
-<h2><%= l(:label_activity_reports) %></h2>
-
-<div class="box">
-  <div class="box-header">
-    <h3><%= l(:label_reports) %></h3>
-  </div>
+<div class="reports-dashboard">
+  <h2><%= l(:label_reports_dashboard) %></h2>
   
-  <div class="box-content">
-    <div class="reports-grid">
-      <!-- Custom Reports -->
-      <div class="report-card">
-        <h3><%= l(:label_sla_report) %></h3>
-        <p><%= l(:description_sla_report) %></p>
-        <%= link_to l(:button_view_report), reports_sla_path, class: 'button' %>
+  <!-- Date Range Filter -->
+  <div class="date-range-filter">
+    <%= form_tag(reports_path, method: :get, class: 'date-range-form') do %>
+      <div class="date-range-fields">
+        <label for="start_date"><%= l(:label_date_from) %></label>
+        <%= date_field_tag 'start_date', @start_date, class: 'date-field' %>
+        
+        <label for="end_date"><%= l(:label_date_to) %></label>
+        <%= date_field_tag 'end_date', @end_date, class: 'date-field' %>
+        
+        <%= submit_tag l(:button_apply), class: 'button-small' %>
       </div>
+    <% end %>
+  </div>
 
-      <div class="report-card">
-        <h3><%= l(:label_queue_wait_time) %></h3>
-        <p><%= l(:description_queue_wait_time) %></p>
-        <%= link_to l(:button_view_report), reports_queue_wait_path, class: 'button' %>
+  <!-- Summary Cards -->
+  <div class="summary-cards">
+    <div class="summary-card">
+      <h3><%= l(:label_projects) %></h3>
+      <div class="summary-value"><%= @project_stats[:total_projects] %></div>
+      <div class="summary-details">
+        <span class="detail"><%= l(:label_active) %>: <%= @project_stats[:active_projects] %></span>
+        <span class="detail"><%= l(:field_is_public) %>: <%= @project_stats[:public_projects] %></span>
       </div>
-
-      <div class="report-card">
-        <h3><%= l(:label_oldest_issues) %></h3>
-        <p><%= l(:description_oldest_issues) %></p>
-        <%= link_to l(:button_view_report), reports_oldest_issues_path, class: 'button' %>
+    </div>
+    
+    <div class="summary-card">
+      <h3><%= l(:label_issue_plural) %></h3>
+      <div class="summary-value"><%= @issue_stats[:total_issues] %></div>
+      <div class="summary-details">
+        <span class="detail"><%= l(:label_open_issues) %>: <%= @issue_stats[:open_issues] %></span>
+        <span class="detail"><%= l(:label_closed_issues) %>: <%= @issue_stats[:closed_issues] %></span>
       </div>
-
-      <div class="report-card">
-        <h3><%= l(:label_enroll_roadmap) %></h3>
-        <p><%= l(:description_enroll_roadmap) %></p>
-        <%= link_to l(:button_view_report), reports_roadmap_path, class: 'button' %>
-      </div>
-
-      <div class="report-card">
-        <h3><%= l(:label_daily_activity) %></h3>
-        <p><%= l(:description_daily_activity) %></p>
-        <%= link_to l(:button_view_report), reports_daily_activity_path, class: 'button' %>
-      </div>
-
-      <div class="report-card">
-        <h3><%= l(:label_deficiencies) %></h3>
-        <p><%= l(:description_deficiencies) %></p>
-        <%= link_to l(:button_view_report), reports_deficiencies_path, class: 'button' %>
-      </div>
-
-      <div class="report-card">
-        <h3><%= l(:label_burn_down) %></h3>
-        <p><%= l(:description_burn_down) %></p>
-        <%= link_to l(:button_view_report), reports_burn_down_path, class: 'button' %>
+    </div>
+    
+    <div class="summary-card">
+      <h3><%= l(:label_user_plural) %></h3>
+      <div class="summary-value"><%= @user_stats[:total_users] %></div>
+      <div class="summary-details">
+        <span class="detail"><%= l(:label_active_users) %>: <%= @user_stats[:active_users] %></span>
       </div>
     </div>
   </div>
+
+  <!-- Charts Section -->
+  <div class="charts-section">
+    <div class="chart-container">
+      <h3><%= l(:label_issues_over_time) %></h3>
+      <canvas id="issuesOverTimeChart"></canvas>
+    </div>
+    
+    <div class="chart-row">
+      <div class="chart-container half">
+        <h3><%= l(:label_issues_by_status) %></h3>
+        <canvas id="issuesByStatusChart"></canvas>
+      </div>
+      
+      <div class="chart-container half">
+        <h3><%= l(:label_issues_by_priority) %></h3>
+        <canvas id="issuesByPriorityChart"></canvas>
+      </div>
+    </div>
+    
+    <div class="chart-row">
+      <div class="chart-container half">
+        <h3><%= l(:label_users_by_role) %></h3>
+        <canvas id="usersByRoleChart"></canvas>
+      </div>
+      
+      <div class="chart-container half">
+        <h3><%= l(:label_top_issue_authors) %></h3>
+        <div class="top-authors">
+          <% @issue_stats[:issues_by_author].take(5).each do |(firstname, lastname, id), count| %>
+            <div class="author-row">
+              <span class="author-name"><%= "#{firstname} #{lastname}" %></span>
+              <span class="author-count"><%= count %></span>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Report Links -->
+  <div class="report-links">
+    <h3><%= l(:label_other_reports) %></h3>
+    <ul>
+      <li><%= link_to l(:label_project_specific_report), project_specific_reports_path %></li>
+      <li><%= link_to l(:label_issues_by_project_assignee), issues_by_project_and_assignee_reports_path %></li>
+      <li><%= link_to l(:label_sla_report), sla_reports_path %></li>
+    </ul>
+  </div>
 </div>
+
+<%= javascript_tag nonce: true do %>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Initialize charts when the page loads
+    if (typeof Chart !== 'undefined' && chartData) {
+      // Issues Over Time Chart
+      if (chartData.issues_over_time) {
+        new Chart(
+          document.getElementById('issuesOverTimeChart').getContext('2d'),
+          { type: 'line', data: chartData.issues_over_time, options: { responsive: true, maintainAspectRatio: false } }
+        );
+      }
+      
+      // Issues by Status Chart
+      if (chartData.issues_by_status) {
+        new Chart(
+          document.getElementById('issuesByStatusChart').getContext('2d'),
+          { type: 'doughnut', data: chartData.issues_by_status, options: { responsive: true, maintainAspectRatio: false } }
+        );
+      }
+      
+      // Issues by Priority Chart
+      if (chartData.issues_by_priority) {
+        new Chart(
+          document.getElementById('issuesByPriorityChart').getContext('2d'),
+          { type: 'bar', data: chartData.issues_by_priority, options: { responsive: true, maintainAspectRatio: false, indexAxis: 'y' } }
+        );
+      }
+      
+      // Users by Role Chart
+      if (chartData.users_by_role) {
+        new Chart(
+          document.getElementById('usersByRoleChart').getContext('2d'),
+          { type: 'pie', data: chartData.users_by_role, options: { responsive: true, maintainAspectRatio: false } }
+        );
+      }
+    }
+  });
+<% end %>

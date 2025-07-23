@@ -9,13 +9,20 @@ Redmine::Plugin.register :redmine_user_activity_report do
   url 'http://example.com/path/to/plugin'
   author_url 'http://example.com/about'
 
+  # Plugin settings
+  settings :default => {
+    'enable_auto_daily_activity' => '1',
+    'last_daily_activity_run' => nil
+  }, :partial => 'settings/redmine_user_activity_report_settings'
+
   # Add detailed permissions for this plugin
   project_module :redmine_user_activity_report do
     permission :view_user_activity_report, {
       :user_activity_report => [:index, :show],
       :user_activity_histories => [:index, :show],
       :project_activity => [:index],
-      :projects_overview => [:index]
+      :projects_overview => [:index],
+      :reports => [:index, :sla, :queue_wait, :oldest_issues, :roadmap, :daily_activity, :deficiencies, :burn_down]
     }
     permission :view_own_activity_only, {
       :user_activity_report => [:show],
@@ -28,15 +35,21 @@ Redmine::Plugin.register :redmine_user_activity_report do
   end
 
   # Add permissions to admin role
-  #Role.find_by_name('Administrator').add_permission!(:view_user_activity_report, :manage_activity_history, :view_own_activity_only)
+  admin_role = Role.find_by_name('Administrator')
+  admin_role.add_permission!(:view_user_activity_report, :manage_activity_history, :view_own_activity_only) if admin_role
 
   
+
+  # Register plugin assets using the correct Redmine plugin API
+  # JavaScript files will be automatically included from app/assets/javascripts
+  # CSS files will be automatically included from app/assets/stylesheets
+  # No need to manually register each file
 
   # Add project overview menu items
   menu :project_menu, :overview,
        { :controller => 'projects_overview', :action => 'index' },
        :caption => 'Overview',
-       :if => Proc.new { |p| User.current.allowed_to?(:view_user_activity_report, p) || User.current.admin? }
+       :if => Proc.new { |p| User.current.allowed_to?(:view_user_activity_report, p) || User.current.allowed_to?(:view_project, p) || User.current.admin? }
 
   menu :project_menu, :activity_report,
        { :controller => 'project_activity', :action => 'index' },
@@ -44,6 +57,11 @@ Redmine::Plugin.register :redmine_user_activity_report do
        :if => Proc.new { |p| User.current.allowed_to?(:view_user_activity_report, p) }
 
   # Add top menu items
+  menu :top_menu, :reports,
+       { :controller => 'reports', :action => 'index' },
+       :caption => :label_reports,
+       :if => Proc.new { User.current.allowed_to_globally?(:view_user_activity_report) }
+
   menu :top_menu, :projects_overview,
        { :controller => 'projects_overview', :action => 'index' },
        :caption => 'Projects Overview',
@@ -78,9 +96,16 @@ Redmine::Plugin.register :redmine_user_activity_report do
       # }
 end
 
- # Update the plugin initialization to include a cron job setup and register assets
- # Add this to the bottom of init.rb
- Rails.configuration.to_prepare do
+# Register plugin assets
+Rails.application.config.assets.precompile += %w(
+  projects_overview.js
+  projects_overview.css
+  reports.js
+  reports.css
+)
+
+# Update the plugin initialization to include a cron job setup and register assets
+Rails.configuration.to_prepare do
    # Set up scheduled task if Rails Cron is available (usually in production)
    if Redmine::Plugin.installed?(:redmine_cron)
      begin

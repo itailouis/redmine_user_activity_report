@@ -1,9 +1,44 @@
 <% content_for :header_tags do %>
-  <%= stylesheet_link_tag 'reports', plugin: 'redmine_user_activity_report' %>
-  <%= javascript_include_tag 'reports', plugin: 'redmine_user_activity_report' %>
+  <%= stylesheet_link_tag 'reports', :plugin => 'redmine_user_activity_report' %>
+  <%= javascript_include_tag 'reports', :plugin => 'redmine_user_activity_report' %>
+  <%= stylesheet_link_tag 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css', media: 'all' %>
+  <style>
+    .like-container {
+      display: inline-flex;
+      align-items: center;
+      margin-left: 20px;
+    }
+    .like-button {
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 1.2em;
+      color: #666;
+      transition: color 0.2s;
+    }
+    .like-button:hover {
+      color: #e74c3c;
+    }
+    .like-button.liked {
+      color: #e74c3c;
+    }
+    .like-count {
+      margin-left: 5px;
+      font-size: 0.9em;
+      color: #666;
+    }
+  </style>
 <% end %>
 
-<h2><%= l(:label_sla_report) %></h2>
+<div class="report-header">
+  <h2 style="display: inline-block;"><%= l(:label_sla_report) %></h2>
+  <div class="like-container">
+    <button class="like-button" id="likeButton" data-report-type="sla" data-report-id="<%= @report_id || 'default' %>">
+      <i class="far fa-heart"></i>
+    </button>
+    <span class="like-count" id="likeCount">0</span>
+  </div>
+</div>
 
 <div class="box">
   <div class="box-header">
@@ -83,7 +118,57 @@
 </div>
 
 <script>
+  // Like functionality
   $(document).ready(function() {
+    // Initialize like button
+    const likeButton = $('#likeButton');
+    const likeCount = $('#likeCount');
+    const reportId = likeButton.data('report-id');
+    const reportType = likeButton.data('report-type');
+    
+    // Load like count on page load
+    function loadLikeCount() {
+      $.ajax({
+        url: '/user_activity_report/likes/count',
+        method: 'GET',
+        data: {
+          report_id: reportId,
+          report_type: reportType
+        },
+        success: function(response) {
+          likeCount.text(response.count || 0);
+          if (response.liked) {
+            likeButton.addClass('liked').html('<i class="fas fa-heart"></i>');
+          } else {
+            likeButton.removeClass('liked').html('<i class="far fa-heart"></i>');
+          }
+        }
+      });
+    }
+    
+    // Handle like button click
+    likeButton.on('click', function() {
+      $.ajax({
+        url: '/user_activity_report/likes/toggle',
+        method: 'POST',
+        data: {
+          report_id: reportId,
+          report_type: reportType,
+          authenticity_token: $('meta[name=csrf-token]').attr('content')
+        },
+        success: function(response) {
+          loadLikeCount();
+        },
+        error: function(xhr) {
+          console.error('Error toggling like:', xhr.responseText);
+        }
+      });
+    });
+    
+    // Initial load
+    loadLikeCount();
+    
+    // Initialize charts
     // SLA Chart
     if (document.getElementById('sla-chart')) {
       const ctx = document.getElementById('sla-chart').getContext('2d');
